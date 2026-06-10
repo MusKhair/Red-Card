@@ -5,6 +5,4 @@
       "schedule": "*/5 * * * *"
     }
   ]
-}{
-  "crons": [{ "path": "/api/sync?secret=CHANGE_ME_IN_DASHBOARD", "schedule": "0 6 * * *" }]
 }
