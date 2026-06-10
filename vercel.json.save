@@ -1,0 +1,17 @@
+{
+  "crons": [
+    {
+      "path": "/api/sync?secret=redcard-sync-2026",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+{
+  "crons": [
+    {
+      "path": "/api/sync?secret=redcard-sync-2026",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}{
+  "crons": [{ "path": "/api/sync?secret=CHANGE_ME_IN_DASHBOARD", "schedule": "0 6 * * *" }]
+}
