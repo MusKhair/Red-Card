@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { MatchCard, type Match, type MyPrediction } from "@/components/MatchCard";
 import { Leaderboard, type BoardRow } from "@/components/Leaderboard";
 import { ForfeitsPanel, type ForfeitRow } from "@/components/ForfeitsPanel";
@@ -20,6 +21,7 @@ export function GroupTabs({
   myPredictions,
   fallbackStages,
   openVoteSessionId,
+  showTournamentBanner,
 }: {
   group: Group;
   isHost: boolean;
@@ -31,6 +33,7 @@ export function GroupTabs({
   myPredictions: MyPrediction[];
   fallbackStages: string[];
   openVoteSessionId: string | null;
+  showTournamentBanner: boolean;
 }) {
   const [tab, setTab] = useState<"fixtures" | "table" | "forfeits">("fixtures");
 
@@ -49,6 +52,13 @@ export function GroupTabs({
       <h1 className="mt-1 font-display text-4xl uppercase">{group.name}</h1>
 
       <InviteShare code={group.invite_code} groupName={group.name} />
+
+      {showTournamentBanner && (
+        <Link href="/predictions" className="card mt-4 block border-booking/40">
+          <p className="font-display text-lg uppercase">🏆 Make your tournament picks</p>
+          <p className="mt-1 text-xs text-chalk-dim">Winner + Golden Boot — locks June 14</p>
+        </Link>
+      )}
 
       <div className="sticky top-0 z-10 -mx-4 mt-5 flex gap-1 bg-pitch-950/90 px-4 py-2 backdrop-blur">
         {(["fixtures", "table", "forfeits"] as const).map((t) => (

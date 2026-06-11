@@ -94,5 +94,10 @@ export async function syncMatchesAndScore(): Promise<{ synced: boolean; reason?:
     .lte("closes_at", new Date().toISOString());
   for (const s of expired ?? []) await admin.rpc("close_forfeit_vote_session", { p_session_id: s.id });
 
+  // Resolve tournament-long awards (Winner auto from the FINAL match's winner field;
+  // Golden Boot via host-entry — see enter_golden_boot_winner). Idempotent no-op if
+  // not ready or already resolved.
+  await admin.rpc("resolve_tournament_awards");
+
   return { synced: true };
 }
