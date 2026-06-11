@@ -83,5 +83,13 @@ export async function syncMatchesAndScore(): Promise<{ synced: boolean; reason?:
     await admin.from("matches").update({ scored: true }).eq("id", match.id);
   }
 
+  // Auto-close any forfeit votes that have been open for 24h, regardless of turnout.
+  const { data: expired } = await admin
+    .from("forfeit_vote_sessions")
+    .select("id")
+    .eq("status", "open")
+    .lte("closes_at", new Date().toISOString());
+  for (const s of expired ?? []) await admin.rpc("close_forfeit_vote_session", { p_session_id: s.id });
+
   return { synced: true };
 }
