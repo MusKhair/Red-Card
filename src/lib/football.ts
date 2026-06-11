@@ -84,6 +84,9 @@ export async function syncMatchesAndScore(): Promise<{ synced: boolean; reason?:
   }
 
   // Auto-close any forfeit votes that have been open for 24h, regardless of turnout.
+  // The cron now runs daily (Vercel Hobby limit), so most votes will already have
+  // closed via the threshold path (cast_forfeit_vote, all members voted) by the
+  // time this runs — this is just the once-a-day timeout backstop.
   const { data: expired } = await admin
     .from("forfeit_vote_sessions")
     .select("id")
