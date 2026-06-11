@@ -14,7 +14,9 @@ export default async function ForfeitRevealPage({
 
   const { data: forfeit } = await supabase
     .from("forfeits")
-    .select("id, stage, status, profiles(display_name), forfeit_library(title, tier, description, proof)")
+    .select(
+      "id, stage, status, is_boss, profiles(display_name), forfeit_library(title, tier, description, proof), custom_forfeits(title, tier, description)"
+    )
     .eq("id", fid)
     .single();
   if (!forfeit) redirect(`/g/${id}`);
@@ -25,6 +27,12 @@ export default async function ForfeitRevealPage({
     description: string;
     proof: string;
   } | null;
+  const custom = forfeit.custom_forfeits as unknown as {
+    title: string;
+    tier: number;
+    description: string;
+  } | null;
+  const source = lib ?? custom;
   const profile = forfeit.profiles as unknown as { display_name: string } | null;
 
   return (
@@ -32,10 +40,11 @@ export default async function ForfeitRevealPage({
       groupId={id}
       loserName={profile?.display_name ?? "The loser"}
       stage={forfeit.stage}
-      title={lib?.title ?? ""}
-      tier={lib?.tier ?? 1}
-      description={lib?.description ?? ""}
-      proof={lib?.proof ?? ""}
+      title={source?.title ?? ""}
+      tier={source?.tier ?? 1}
+      description={source?.description ?? ""}
+      proof={lib?.proof ?? "Photo or video in the group chat"}
+      isBoss={forfeit.is_boss}
     />
   );
 }

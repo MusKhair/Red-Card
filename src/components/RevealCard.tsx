@@ -14,6 +14,7 @@ export function RevealCard({
   tier,
   description,
   proof,
+  isBoss = false,
 }: {
   groupId: string;
   loserName: string;
@@ -22,6 +23,7 @@ export function RevealCard({
   tier: number;
   description: string;
   proof: string;
+  isBoss?: boolean;
 }) {
   async function share() {
     const text = `🟥 RED CARD — ${loserName} finished bottom (${stage}). Sentence: ${title}. ${description}`;
@@ -39,9 +41,15 @@ export function RevealCard({
   return (
     <main className="grid min-h-dvh place-items-center bg-pitch-950 px-5 py-8 [perspective:1200px]">
       <div className="w-full max-w-sm">
-        <div className="animate-cardflip rounded-[2rem] bg-sendoff p-7 shadow-[0_0_120px_rgba(229,56,59,0.45)]">
+        <div
+          className={`animate-cardflip rounded-[2rem] p-7 ${
+            isBoss
+              ? "bg-booking shadow-[0_0_120px_rgba(255,214,10,0.45)]"
+              : "bg-sendoff shadow-[0_0_120px_rgba(229,56,59,0.45)]"
+          }`}
+        >
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-pitch-950/70">
-            Red card · {stage}
+            {isBoss ? "👑 Boss forfeit" : "Red card"} · {stage}
           </p>
           <h1 className="mt-4 font-display text-6xl uppercase leading-[0.9] text-pitch-950">
             {loserName}
@@ -51,7 +59,7 @@ export function RevealCard({
           </p>
 
           <div className="mt-6 rounded-2xl bg-pitch-950 p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-sendoff">
+            <p className={`text-xs uppercase tracking-[0.2em] ${isBoss ? "text-booking" : "text-sendoff"}`}>
               The sentence · Tier {tier}
             </p>
             <p className="mt-2 font-display text-3xl uppercase leading-tight text-chalk">{title}</p>
