@@ -45,8 +45,8 @@ Project Settings → Environment Variables. `SUPABASE_SERVICE_ROLE_KEY` and
 npm install
 npm run dev
 ```
-Then hit `http://localhost:3000/api/sync?secret=YOUR_SYNC_SECRET` once to pull
-all WC 2026 fixtures into your DB.
+Then run `curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/sync`
+once to pull all WC 2026 fixtures into your DB.
 
 ### 5. Deploy
 Push to GitHub → import on Vercel → add env vars → deploy.
@@ -60,7 +60,8 @@ The fix is already built in:
   per minute. If anyone in any group has the app open during a match, scores flow.
 - For belt-and-braces during match days, point a free pinger
   ([cron-job.org](https://cron-job.org)) at
-  `https://your-app.vercel.app/api/sync?secret=...` every 2 minutes.
+  `https://your-app.vercel.app/api/sync` every 2 minutes, with a custom header
+  `Authorization: Bearer YOUR_CRON_SECRET`.
 
 ## Decisions you should know about
 

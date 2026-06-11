@@ -204,10 +204,9 @@ create policy "forfeits: host assigns" on public.forfeits
   for insert to authenticated with check (
     exists (select 1 from groups g where g.id = group_id and g.host_id = auth.uid())
   );
-create policy "forfeits: loser or host updates" on public.forfeits
+create policy "forfeits: host updates" on public.forfeits
   for update to authenticated using (
-    user_id = auth.uid()
-    or exists (select 1 from groups g where g.id = group_id and g.host_id = auth.uid())
+    exists (select 1 from groups g where g.id = group_id and g.host_id = auth.uid())
   );
 
 -- ============ VETO (security definer: loser can't hand-pick the replacement) ============

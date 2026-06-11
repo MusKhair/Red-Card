@@ -73,7 +73,7 @@ export function GroupTabs({
         <div className="mt-4 flex flex-col gap-3">
           {matches.length === 0 && (
             <div className="card text-center text-sm text-chalk-dim">
-              No fixtures yet. Hit <code className="text-chalk">/api/sync?secret=…</code> once to pull them in.
+              No fixtures yet. Hit <code className="text-chalk">/api/sync</code> (with your CRON_SECRET) once to pull them in.
             </div>
           )}
           {upcoming.map((m) => (
