@@ -453,6 +453,20 @@ end; $$;
 
 -- ============ FORFEIT VOTING RPCs ============
 -- open_forfeit_vote: security definer so the caller can't preview/influence which 3 options get drawn.
+--
+-- Stage-based tier escalation:
+--   - Each forfeit-vote stage maps to a "stage tier" reflecting its stakes:
+--       GROUP_STAGE    -> 1
+--       LAST_32        -> 1
+--       LAST_16        -> 2
+--       QUARTER_FINALS -> 2
+--       SEMI_FINALS    -> 3
+--       FINAL          -> 3
+--   - group.max_tier remains a hard CAP: effective_tier = LEAST(stage_tier, max_tier).
+--     A tier-1 group never draws tier-2/3 forfeits, regardless of stage.
+--   - The pool is an EXACT match on effective_tier (tier = effective_tier), not
+--     tier <= effective_tier — low-stakes stages can't pull high-tier forfeits and
+--     vice versa. Each stage draws only from its own effective tier.
 create or replace function public.open_forfeit_vote(
   p_group_id uuid,
   p_loser_id uuid,
@@ -463,6 +477,8 @@ create or replace function public.open_forfeit_vote(
 returns uuid language plpgsql security definer set search_path = public as $$
 declare
   v_max_tier int;
+  v_stage_tier int;
+  v_effective_tier int;
   v_pool_count int;
   v_session_id uuid;
 begin
@@ -472,10 +488,26 @@ begin
 
   select max_tier into v_max_tier from groups where id = p_group_id;
 
+  v_stage_tier := case p_stage
+    when 'GROUP_STAGE' then 1
+    when 'LAST_32' then 1
+    when 'LAST_16' then 2
+    when 'QUARTER_FINALS' then 2
+    when 'SEMI_FINALS' then 3
+    when 'FINAL' then 3
+    else null
+  end;
+
+  if v_stage_tier is null then
+    raise exception 'INVALID_STAGE';
+  end if;
+
+  v_effective_tier := least(v_stage_tier, v_max_tier);
+
   select count(*) into v_pool_count from (
-    select 1 from forfeit_library where tier <= v_max_tier
+    select 1 from forfeit_library where tier = v_effective_tier
     union all
-    select 1 from custom_forfeits where group_id = p_group_id and status = 'approved' and tier <= v_max_tier
+    select 1 from custom_forfeits where group_id = p_group_id and status = 'approved' and tier = v_effective_tier
   ) pool;
 
   if v_pool_count < 3 then
@@ -490,10 +522,10 @@ begin
   select v_session_id, library_id, custom_forfeit_id
   from (
     select id as library_id, null::uuid as custom_forfeit_id
-    from forfeit_library where tier <= v_max_tier
+    from forfeit_library where tier = v_effective_tier
     union all
     select null::int as library_id, id as custom_forfeit_id
-    from custom_forfeits where group_id = p_group_id and status = 'approved' and tier <= v_max_tier
+    from custom_forfeits where group_id = p_group_id and status = 'approved' and tier = v_effective_tier
   ) pool
   order by random()
   limit 3;
