@@ -53,9 +53,14 @@ export function MatchCard({
 
   const [home, setHome] = useState<string>(myPrediction ? String(myPrediction.pred_home) : "");
   const [away, setAway] = useState<string>(myPrediction ? String(myPrediction.pred_away) : "");
+  const [pred, setPred] = useState<MyPrediction | null>(myPrediction ?? null);
   const [saved, setSaved] = useState<boolean>(!!myPrediction);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPred(myPrediction ?? null);
+  }, [myPrediction]);
 
   async function save() {
     setError(null);
@@ -67,7 +72,11 @@ export function MatchCard({
     setSaving(true);
     const supabase = createClient();
     const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) return;
+    if (!auth.user) {
+      setSaving(false);
+      setError("Your session expired — sign in again to save predictions.");
+      return;
+    }
     const { error: err } = await supabase
       .from("predictions")
       .upsert(
@@ -79,6 +88,7 @@ export function MatchCard({
       setError(err.message.includes("policy") ? "Too late — this match is locked." : err.message);
       return;
     }
+    setPred({ match_id: match.id, pred_home: h, pred_away: a, points: null });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   }
@@ -138,17 +148,17 @@ export function MatchCard({
         </div>
       )}
 
-      {(locked || match.status === "FINISHED") && myPrediction && (
+      {(locked || match.status === "FINISHED") && pred && (
         <p className="mt-2 text-center text-xs text-chalk-dim">
-          You said {myPrediction.pred_home}:{myPrediction.pred_away}
-          {myPrediction.points !== null && (
-            <span className={myPrediction.points > 0 ? "ml-2 font-semibold text-grass" : "ml-2 text-sendoff"}>
-              {myPrediction.points > 0 ? `+${myPrediction.points} pts` : "0 pts"}
+          You said {pred.pred_home}:{pred.pred_away}
+          {pred.points !== null && (
+            <span className={pred.points > 0 ? "ml-2 font-semibold text-grass" : "ml-2 text-sendoff"}>
+              {pred.points > 0 ? `+${pred.points} pts` : "0 pts"}
             </span>
           )}
         </p>
       )}
-      {locked && !myPrediction && match.status !== "FINISHED" && (
+      {locked && !pred && match.status !== "FINISHED" && (
         <p className="mt-2 text-center text-xs text-sendoff">No prediction — that&apos;s 0 pts, chief.</p>
       )}
       {error && <p className="mt-2 text-center text-xs text-sendoff">{error}</p>}
