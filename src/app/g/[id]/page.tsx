@@ -32,6 +32,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     { data: groupSessions },
     { data: openSession },
     { data: tournamentPrediction },
+    { data: awardResolutions },
   ] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff", { ascending: true }),
     supabase
@@ -51,11 +52,24 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     supabase.from("group_members").select("veto_used").eq("group_id", id).eq("user_id", auth.user.id).single(),
     supabase.from("forfeit_vote_sessions").select("stage").eq("group_id", id),
     supabase.from("forfeit_vote_sessions").select("id").eq("group_id", id).eq("status", "open").maybeSingle(),
-    supabase.from("tournament_predictions").select("user_id").eq("user_id", auth.user.id).maybeSingle(),
+    supabase
+      .from("tournament_predictions")
+      .select("winner_team, golden_boot_player, winner_points, golden_boot_points")
+      .eq("user_id", auth.user.id)
+      .maybeSingle(),
+    supabase.from("tournament_award_resolutions").select("award, winning_value"),
   ]);
 
   const showTournamentBanner =
     !tournamentPrediction && Date.now() < new Date(TOURNAMENT_PREDICTIONS_LOCK).getTime();
+
+  const tournamentResolutions = {
+    tournamentWinner: awardResolutions?.find((r) => r.award === "tournament_winner")?.winning_value ?? null,
+    goldenBootWinner: awardResolutions?.find((r) => r.award === "golden_boot")?.winning_value ?? null,
+  };
+
+  const leaderboardIndex = (board ?? []).findIndex((r) => r.user_id === auth.user.id);
+  const leaderboardPosition = leaderboardIndex === -1 ? null : leaderboardIndex + 1;
 
   // Stages eligible for the "host's gone quiet" fallback: every match in the stage is
   // FINISHED, the last kickoff was 48h+ ago, and nobody has opened a vote for it yet.
@@ -81,6 +95,9 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       fallbackStages={fallbackStages}
       openVoteSessionId={openSession?.id ?? null}
       showTournamentBanner={showTournamentBanner}
+      tournamentPrediction={tournamentPrediction ?? null}
+      tournamentResolutions={tournamentResolutions}
+      leaderboardPosition={leaderboardPosition}
     />
   );
 }

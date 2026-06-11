@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MatchCard, type Match, type MyPrediction } from "@/components/MatchCard";
 import { Leaderboard, type BoardRow } from "@/components/Leaderboard";
 import { ForfeitsPanel, type ForfeitRow } from "@/components/ForfeitsPanel";
+import { BetsPanel, type TournamentPrediction, type TournamentResolutions } from "@/components/BetsPanel";
 import { InviteShare } from "@/components/InviteShare";
 import { STAGE_LABEL, VOTE_STAGES } from "@/lib/stages";
 
@@ -22,6 +23,9 @@ export function GroupTabs({
   fallbackStages,
   openVoteSessionId,
   showTournamentBanner,
+  tournamentPrediction,
+  tournamentResolutions,
+  leaderboardPosition,
 }: {
   group: Group;
   isHost: boolean;
@@ -34,8 +38,11 @@ export function GroupTabs({
   fallbackStages: string[];
   openVoteSessionId: string | null;
   showTournamentBanner: boolean;
+  tournamentPrediction: TournamentPrediction;
+  tournamentResolutions: TournamentResolutions;
+  leaderboardPosition: number | null;
 }) {
-  const [tab, setTab] = useState<"fixtures" | "table" | "forfeits">("fixtures");
+  const [tab, setTab] = useState<"fixtures" | "table" | "bets" | "forfeits">("fixtures");
 
   const predsByMatch = useMemo(() => {
     const map = new Map<number, MyPrediction>();
@@ -61,7 +68,7 @@ export function GroupTabs({
       )}
 
       <div className="sticky top-0 z-10 -mx-4 mt-5 flex gap-1 bg-pitch-950/90 px-4 py-2 backdrop-blur">
-        {(["fixtures", "table", "forfeits"] as const).map((t) => (
+        {(["fixtures", "table", "bets", "forfeits"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -92,6 +99,18 @@ export function GroupTabs({
       )}
 
       {tab === "table" && <Leaderboard board={board} currentUserId={currentUserId} />}
+
+      {tab === "bets" && (
+        <BetsPanel
+          currentUserId={currentUserId}
+          matches={matches}
+          myPredictions={myPredictions}
+          tournamentPrediction={tournamentPrediction}
+          tournamentResolutions={tournamentResolutions}
+          board={board}
+          leaderboardPosition={leaderboardPosition}
+        />
+      )}
 
       {tab === "forfeits" && (
         <ForfeitsPanel

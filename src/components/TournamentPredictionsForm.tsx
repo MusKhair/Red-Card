@@ -27,12 +27,16 @@ export function TournamentPredictionsForm({
   finalFinished,
   tournamentWinner,
   goldenBootWinner,
+  backHref,
+  backLabel,
 }: {
   initial: Initial;
   teams: string[];
   finalFinished: boolean;
   tournamentWinner: string | null;
   goldenBootWinner: string | null;
+  backHref: string;
+  backLabel: string;
 }) {
   const locked = Date.now() > new Date(TOURNAMENT_PREDICTIONS_LOCK).getTime();
 
@@ -100,7 +104,11 @@ export function TournamentPredictionsForm({
 
   return (
     <main className="mx-auto max-w-md px-4 py-8">
-      <p className="eyebrow">World Cup 2026</p>
+      <Link href={backHref} className="text-xs uppercase tracking-wide text-chalk-dim">
+        ← {backLabel}
+      </Link>
+
+      <p className="mt-4 eyebrow">World Cup 2026</p>
       <h1 className="mt-1 font-display text-4xl uppercase">Tournament picks</h1>
       <p className="mt-2 text-sm text-chalk-dim">
         One set of picks across every group. Locks June 14.

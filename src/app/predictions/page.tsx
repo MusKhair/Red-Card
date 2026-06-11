@@ -7,7 +7,7 @@ export default async function PredictionsPage() {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/login?next=/predictions");
 
-  const [{ data: prediction }, { data: matches }, { data: resolutions }] = await Promise.all([
+  const [{ data: prediction }, { data: matches }, { data: resolutions }, { data: memberships }] = await Promise.all([
     supabase
       .from("tournament_predictions")
       .select("winner_team, golden_boot_player, winner_points, golden_boot_points")
@@ -15,6 +15,7 @@ export default async function PredictionsPage() {
       .maybeSingle(),
     supabase.from("matches").select("home_team, away_team, stage, status"),
     supabase.from("tournament_award_resolutions").select("award, winning_value"),
+    supabase.from("group_members").select("group_id").eq("user_id", auth.user.id).order("joined_at", { ascending: true }).limit(1),
   ]);
 
   const teams = Array.from(
@@ -32,6 +33,10 @@ export default async function PredictionsPage() {
   const goldenBootWinner =
     resolutions?.find((r) => r.award === "golden_boot")?.winning_value ?? null;
 
+  const firstGroupId = memberships?.[0]?.group_id ?? null;
+  const backHref = firstGroupId ? `/g/${firstGroupId}` : "/groups";
+  const backLabel = firstGroupId ? "Back to my group" : "Back to my groups";
+
   return (
     <TournamentPredictionsForm
       initial={prediction ?? null}
@@ -39,6 +44,8 @@ export default async function PredictionsPage() {
       finalFinished={finalFinished}
       tournamentWinner={tournamentWinner}
       goldenBootWinner={goldenBootWinner}
+      backHref={backHref}
+      backLabel={backLabel}
     />
   );
 }
