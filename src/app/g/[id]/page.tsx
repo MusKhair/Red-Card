@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { GroupTabs, VOTE_STAGES } from "@/components/GroupTabs";
+import { GroupTabs } from "@/components/GroupTabs";
+import { VOTE_STAGES } from "@/lib/stages";
 import { syncMatchesAndScore } from "@/lib/football";
 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;

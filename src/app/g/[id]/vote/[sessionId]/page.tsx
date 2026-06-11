@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { STAGE_LABEL } from "@/components/GroupTabs";
+import { STAGE_LABEL } from "@/lib/stages";
 import { VoteSession, type VoteOption } from "@/components/VoteSession";
 
 type LibOrCustom = { title: string; description: string; tier: number };
