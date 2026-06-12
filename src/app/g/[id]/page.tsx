@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GroupTabs } from "@/components/GroupTabs";
+import type { GroupPrediction } from "@/components/MatchCard";
 import { VOTE_STAGES } from "@/lib/stages";
 import { TOURNAMENT_PREDICTIONS_LOCK } from "@/lib/tournament";
 import { syncMatchesAndScore } from "@/lib/football";
@@ -33,6 +34,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     { data: openSession },
     { data: tournamentPrediction },
     { data: awardResolutions },
+    { data: groupMembers },
   ] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff", { ascending: true }),
     supabase
@@ -58,7 +60,27 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       .eq("user_id", auth.user.id)
       .maybeSingle(),
     supabase.from("tournament_award_resolutions").select("award, winning_value"),
+    supabase.from("group_members").select("user_id, profiles(display_name)").eq("group_id", id),
   ]);
+
+  const memberRows = (groupMembers ?? []) as unknown as {
+    user_id: string;
+    profiles: { display_name: string } | null;
+  }[];
+  const memberIds = memberRows.map((m) => m.user_id);
+  const { data: groupPredictionsRaw } = await supabase
+    .from("predictions")
+    .select("match_id, user_id, pred_home, pred_away")
+    .in("user_id", memberIds.length ? memberIds : [auth.user.id]);
+
+  const displayNameByUserId = new Map(memberRows.map((m) => [m.user_id, m.profiles?.display_name ?? "?"]));
+  const groupPredictions: GroupPrediction[] = (groupPredictionsRaw ?? []).map((p) => ({
+    match_id: p.match_id,
+    user_id: p.user_id,
+    display_name: displayNameByUserId.get(p.user_id) ?? "?",
+    pred_home: p.pred_home,
+    pred_away: p.pred_away,
+  }));
 
   const showTournamentBanner =
     !tournamentPrediction && Date.now() < new Date(TOURNAMENT_PREDICTIONS_LOCK).getTime();
@@ -92,6 +114,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       board={board ?? []}
       forfeits={(forfeits ?? []) as never[]}
       myPredictions={predictions ?? []}
+      groupPredictions={groupPredictions}
       fallbackStages={fallbackStages}
       openVoteSessionId={openSession?.id ?? null}
       showTournamentBanner={showTournamentBanner}

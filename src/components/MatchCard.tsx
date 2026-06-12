@@ -18,6 +18,14 @@ export type Match = {
 
 export type MyPrediction = { match_id: number; pred_home: number; pred_away: number; points: number | null };
 
+export type GroupPrediction = {
+  match_id: number;
+  user_id: string;
+  display_name: string;
+  pred_home: number;
+  pred_away: number;
+};
+
 function useCountdown(kickoff: string) {
   const [msLeft, setMsLeft] = useState(() => new Date(kickoff).getTime() - Date.now());
   useEffect(() => {
@@ -42,10 +50,12 @@ export function MatchCard({
   match,
   stageLabel,
   myPrediction,
+  otherPredictions = [],
 }: {
   match: Match;
   stageLabel: string;
   myPrediction?: MyPrediction;
+  otherPredictions?: GroupPrediction[];
 }) {
   const msLeft = useCountdown(match.kickoff);
   const locked = msLeft <= 0;
@@ -161,6 +171,24 @@ export function MatchCard({
       {locked && !pred && match.status !== "FINISHED" && (
         <p className="mt-2 text-center text-xs text-sendoff">No prediction — that&apos;s 0 pts, chief.</p>
       )}
+
+      {locked && (
+        <div className="mt-3 border-t border-pitch-800 pt-2">
+          <p className="eyebrow">What the squad said</p>
+          {otherPredictions.length === 0 ? (
+            <p className="mt-1 text-xs text-chalk-dim">No one else predicted this one.</p>
+          ) : (
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-chalk-dim">
+              {otherPredictions.map((p) => (
+                <span key={p.user_id}>
+                  <span className="text-chalk">{p.display_name}</span>: {p.pred_home}-{p.pred_away}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {error && <p className="mt-2 text-center text-xs text-sendoff">{error}</p>}
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { MatchCard, type Match, type MyPrediction } from "@/components/MatchCard";
+import { MatchCard, type Match, type MyPrediction, type GroupPrediction } from "@/components/MatchCard";
 import { Leaderboard, type BoardRow } from "@/components/Leaderboard";
 import { ForfeitsPanel, type ForfeitRow } from "@/components/ForfeitsPanel";
 import { BetsPanel, type TournamentPrediction, type TournamentResolutions } from "@/components/BetsPanel";
@@ -20,6 +20,7 @@ export function GroupTabs({
   board,
   forfeits,
   myPredictions,
+  groupPredictions,
   fallbackStages,
   openVoteSessionId,
   showTournamentBanner,
@@ -35,6 +36,7 @@ export function GroupTabs({
   board: BoardRow[];
   forfeits: ForfeitRow[];
   myPredictions: MyPrediction[];
+  groupPredictions: GroupPrediction[];
   fallbackStages: string[];
   openVoteSessionId: string | null;
   showTournamentBanner: boolean;
@@ -49,6 +51,17 @@ export function GroupTabs({
     myPredictions.forEach((p) => map.set(p.match_id, p));
     return map;
   }, [myPredictions]);
+
+  const otherPredsByMatch = useMemo(() => {
+    const map = new Map<number, GroupPrediction[]>();
+    groupPredictions.forEach((p) => {
+      if (p.user_id === currentUserId) return;
+      const arr = map.get(p.match_id) ?? [];
+      arr.push(p);
+      map.set(p.match_id, arr);
+    });
+    return map;
+  }, [groupPredictions, currentUserId]);
 
   const upcoming = matches.filter((m) => m.status !== "FINISHED");
   const finished = matches.filter((m) => m.status === "FINISHED").reverse();
@@ -89,11 +102,23 @@ export function GroupTabs({
             </div>
           )}
           {upcoming.map((m) => (
-            <MatchCard key={m.id} match={m} stageLabel={STAGE_LABEL[m.stage] ?? m.stage} myPrediction={predsByMatch.get(m.id)} />
+            <MatchCard
+              key={m.id}
+              match={m}
+              stageLabel={STAGE_LABEL[m.stage] ?? m.stage}
+              myPrediction={predsByMatch.get(m.id)}
+              otherPredictions={otherPredsByMatch.get(m.id) ?? []}
+            />
           ))}
           {finished.length > 0 && <p className="eyebrow mt-4">Finished</p>}
           {finished.map((m) => (
-            <MatchCard key={m.id} match={m} stageLabel={STAGE_LABEL[m.stage] ?? m.stage} myPrediction={predsByMatch.get(m.id)} />
+            <MatchCard
+              key={m.id}
+              match={m}
+              stageLabel={STAGE_LABEL[m.stage] ?? m.stage}
+              myPrediction={predsByMatch.get(m.id)}
+              otherPredictions={otherPredsByMatch.get(m.id) ?? []}
+            />
           ))}
         </div>
       )}
