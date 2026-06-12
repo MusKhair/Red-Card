@@ -63,7 +63,7 @@ export function GroupTabs({
       {showTournamentBanner && (
         <Link href="/predictions" className="card mt-4 block border-booking/40">
           <p className="font-display text-lg uppercase">🏆 Make your tournament picks</p>
-          <p className="mt-1 text-xs text-chalk-dim">Winner + Golden Boot — locks June 14</p>
+          <p className="mt-1 text-xs text-chalk-dim">Winner + Golden Boot — locks June 20</p>
         </Link>
       )}
 

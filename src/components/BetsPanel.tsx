@@ -106,7 +106,7 @@ export function BetsPanel({
             <span className="text-xs uppercase text-chalk-dim">Locked</span>
           ) : (
             <Link href="/predictions" className="text-xs uppercase text-booking">
-              Edit before June 14
+              Edit before June 20
             </Link>
           )}
         </div>

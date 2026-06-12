@@ -3,4 +3,4 @@
  * Must match the cutoff baked into the tournament_predictions RLS policies
  * (supabase/migrations/stage6_tournament_predictions.sql).
  */
-export const TOURNAMENT_PREDICTIONS_LOCK = "2026-06-14T23:59:59Z";
+export const TOURNAMENT_PREDICTIONS_LOCK = "2026-06-20T23:59:59Z";

@@ -111,7 +111,7 @@ export function TournamentPredictionsForm({
       <p className="mt-4 eyebrow">World Cup 2026</p>
       <h1 className="mt-1 font-display text-4xl uppercase">Tournament picks</h1>
       <p className="mt-2 text-sm text-chalk-dim">
-        One set of picks across every group. Locks June 14.
+        One set of picks across every group. Locks June 20.
       </p>
 
       {locked ? (
