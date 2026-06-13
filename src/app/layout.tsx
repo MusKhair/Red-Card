@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Inter } from "next/font/google";
+import { Oswald, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const display = Anton({ weight: "400", subsets: ["latin"], variable: "--font-display" });
+const display = Oswald({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-display" });
 const body = Inter({ subsets: ["latin"], variable: "--font-body" });
+const mono = JetBrains_Mono({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "RedCard — World Cup forfeit sweepstakes",
@@ -16,7 +17,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

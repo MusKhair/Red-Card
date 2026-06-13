@@ -28,7 +28,15 @@ body {
     @apply w-full rounded-xl border border-pitch-700 bg-pitch-800 px-4 py-3 text-chalk outline-none focus:border-booking;
   }
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.2em] text-chalk-dim;
+    @apply font-mono text-xs font-medium uppercase tracking-[0.2em] text-chalk-dim;
+  }
+  .bg-scoreboard {
+    @apply bg-pitch-950;
+    background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 30px);
+  }
+  .bg-pitch-field {
+    @apply bg-grass-field;
+    background-image: repeating-linear-gradient(118deg, rgba(255, 255, 255, 0.04) 0 26px, rgba(0, 0, 0, 0.06) 26px 52px);
   }
 }
 

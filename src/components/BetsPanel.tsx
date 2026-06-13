@@ -37,22 +37,48 @@ function fmtKickoffIn(ms: number): string {
   return `Kicks off in ${minutes}m`;
 }
 
-/** +15/+10 style badge for resolved tournament awards. */
+/** +15/+10 style pill for resolved tournament awards. */
 function AwardPointsBadge({ points }: { points: number | null }) {
   if (points === null) return null;
   return (
-    <span className={points > 0 ? "ml-2 font-semibold text-grass" : "ml-2 text-sendoff"}>
+    <span
+      className={`ml-2 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] ${
+        points > 0 ? "bg-grass-bright text-pitch-950" : "bg-pitch-800 text-chalk-dim"
+      }`}
+    >
       {points > 0 ? `+${points} pts` : "0 pts"}
     </span>
   );
 }
 
-/** +5/+3/+1/0/Pending badge for a single match prediction. */
+/** +5/+3/+1/0/Pending pill for a single match prediction. */
 function PredictionPointsBadge({ points }: { points: number | null }) {
-  if (points === null) return <span className="text-xs italic text-chalk-dim">Pending</span>;
-  if (points === 5) return <span className="text-xs font-semibold text-grass">+5 pts</span>;
-  if (points > 0) return <span className="text-xs font-semibold text-booking">+{points} pt{points > 1 ? "s" : ""}</span>;
-  return <span className="text-xs text-chalk-dim">0 pts</span>;
+  if (points === null) {
+    return (
+      <span className="rounded-full bg-pitch-800 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-chalk-dim">
+        Pending
+      </span>
+    );
+  }
+  if (points === 5) {
+    return (
+      <span className="rounded-full bg-grass-bright px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-pitch-950">
+        +5 pts
+      </span>
+    );
+  }
+  if (points > 0) {
+    return (
+      <span className="rounded-full bg-booking px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-pitch-950">
+        +{points} pt{points > 1 ? "s" : ""}
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full bg-pitch-800 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-chalk-dim">
+      0 pts
+    </span>
+  );
 }
 
 export function BetsPanel({
@@ -98,14 +124,19 @@ export function BetsPanel({
   const myRow = board.find((r) => r.user_id === currentUserId);
 
   return (
-    <div className="mt-4 flex flex-col gap-3">
-      <div className="card">
+    <div className="flex flex-col gap-4 md:grid md:grid-cols-3 md:gap-4">
+      <div className="card md:col-span-3">
         <div className="flex items-center justify-between">
-          <p className="font-display text-xl uppercase">Tournament bets</p>
+          <p className="font-display text-2xl font-bold uppercase tracking-wide">Tournament bets</p>
           {locked ? (
-            <span className="text-xs uppercase text-chalk-dim">Locked</span>
+            <span className="rounded-full bg-pitch-800 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">
+              Locked
+            </span>
           ) : (
-            <Link href="/predictions" className="text-xs uppercase text-booking">
+            <Link
+              href="/predictions"
+              className="rounded-full border border-booking/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-booking"
+            >
               Edit before June 20
             </Link>
           )}
@@ -116,27 +147,32 @@ export function BetsPanel({
             You haven&apos;t made tournament picks yet — make them now →
           </Link>
         ) : (
-          <div className="mt-3 flex flex-col gap-2 text-sm">
-            <p>
-              🏆 Winner: <span className="font-semibold">{tournamentPrediction.winner_team ?? "—"}</span>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <p className="text-sm">
+              🏆 Winner: <span className="font-display uppercase tracking-wide">{tournamentPrediction.winner_team ?? "—"}</span>
               <AwardPointsBadge points={tournamentPrediction.winner_points} />
               {tournamentResolutions.tournamentWinner && (
-                <span className="ml-2 text-xs text-chalk-dim">(Result: {tournamentResolutions.tournamentWinner})</span>
+                <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-chalk-dim">
+                  Result: {tournamentResolutions.tournamentWinner}
+                </span>
               )}
             </p>
-            <p>
-              ⚽ Golden Boot: <span className="font-semibold">{tournamentPrediction.golden_boot_player ?? "—"}</span>
+            <p className="text-sm">
+              ⚽ Golden Boot:{" "}
+              <span className="font-display uppercase tracking-wide">{tournamentPrediction.golden_boot_player ?? "—"}</span>
               <AwardPointsBadge points={tournamentPrediction.golden_boot_points} />
               {tournamentResolutions.goldenBootWinner && (
-                <span className="ml-2 text-xs text-chalk-dim">(Result: {tournamentResolutions.goldenBootWinner})</span>
+                <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-chalk-dim">
+                  Result: {tournamentResolutions.goldenBootWinner}
+                </span>
               )}
             </p>
           </div>
         )}
       </div>
 
-      <div className="card">
-        <p className="font-display text-xl uppercase">Match predictions</p>
+      <div className="card md:col-span-2">
+        <p className="font-display text-2xl font-bold uppercase tracking-wide">Match predictions</p>
         {rows.length === 0 ? (
           <p className="mt-3 text-sm text-chalk-dim">
             You haven&apos;t predicted any matches yet — head to Fixtures to make some.
@@ -166,10 +202,10 @@ export function BetsPanel({
                   className="flex items-center justify-between gap-3 border-b border-pitch-800 pb-2 last:border-0 last:pb-0"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs text-chalk-dim">
+                    <p className="truncate font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">
                       {STAGE_LABEL[match.stage] ?? match.stage} · {kickoffLocal}
                     </p>
-                    <p className="truncate text-sm font-semibold">
+                    <p className="truncate font-display uppercase tracking-wide">
                       {match.home_team} vs {match.away_team}
                     </p>
                     <p className="mt-0.5 text-xs text-chalk-dim">
@@ -184,25 +220,25 @@ export function BetsPanel({
         )}
       </div>
 
-      <div className="card">
-        <p className="font-display text-xl uppercase">Your standing</p>
+      <div className="card md:col-span-1">
+        <p className="font-display text-2xl font-bold uppercase tracking-wide">Your standing</p>
         <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
           <div>
-            <p className="text-xs text-chalk-dim">Total points</p>
-            <p className="font-display text-2xl tabular-nums">{myRow?.points ?? 0}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">Total points</p>
+            <p className="font-display text-3xl tabular-nums">{myRow?.points ?? 0}</p>
           </div>
           <div>
-            <p className="text-xs text-chalk-dim">Exact scores</p>
-            <p className="font-display text-2xl tabular-nums">{myRow?.exact_hits ?? 0}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">Exact scores</p>
+            <p className="font-display text-3xl tabular-nums">{myRow?.exact_hits ?? 0}</p>
           </div>
         </div>
         {leaderboardPosition !== null && board.length > 0 && (
-          <p className="mt-2 text-sm text-chalk-dim">
-            Position: <span className="font-semibold text-chalk">{ordinal(leaderboardPosition)} of {board.length}</span>
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">
+            Position: <span className="text-chalk">{ordinal(leaderboardPosition)} of {board.length}</span>
           </p>
         )}
         {tournamentPrediction && (tournamentPrediction.winner_points !== null || tournamentPrediction.golden_boot_points !== null) && (
-          <p className="mt-2 text-xs text-chalk-dim">
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">
             Tournament awards: {tournamentPrediction.winner_points ?? 0} + {tournamentPrediction.golden_boot_points ?? 0} pts
           </p>
         )}

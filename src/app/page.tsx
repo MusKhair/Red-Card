@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
@@ -7,89 +8,122 @@ export default async function Landing() {
   const isSignedIn = !!data.user;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-8 px-6 py-10">
-      <div className="animate-risefade text-center">
-        <h1 className="font-display text-7xl uppercase leading-none">
-          Red <span className="text-sendoff">Card</span>
-        </h1>
-        <p className="eyebrow mt-3">World Cup forfeit sweepstakes for your group chat</p>
+    <main className="relative min-h-dvh overflow-hidden bg-pitch-950 bg-[radial-gradient(440px_300px_at_50%_6%,rgba(229,56,59,0.30),transparent_64%),radial-gradient(280px_200px_at_50%_2%,rgba(255,214,10,0.10),transparent_60%)] md:bg-[radial-gradient(700px_420px_at_80%_30%,rgba(229,56,59,0.16),transparent_62%)]">
+      {/* desktop top bar */}
+      <div className="hidden items-center justify-between border-b border-pitch-800 px-8 py-4 md:flex">
+        <div className="font-display text-lg font-bold uppercase tracking-wide">
+          <span className="text-chalk">Red</span> <span className="text-sendoff">Card</span>
+        </div>
+        {isSignedIn ? (
+          <Link
+            href="/groups"
+            className="flex items-center gap-2 rounded-full border border-pitch-700 px-3.5 py-2 text-xs font-semibold uppercase tracking-wide text-chalk"
+          >
+            My groups
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="flex items-center gap-2 rounded-full border border-pitch-700 px-3.5 py-2 text-xs font-semibold text-chalk"
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-extrabold text-[#4285F4]">
+              G
+            </span>
+            Sign in
+          </Link>
+        )}
       </div>
 
-      <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:justify-center md:gap-10">
-        <div className="animate-risefade flex justify-center md:w-2/5">
-          <svg viewBox="0 0 170 270" className="h-44 w-auto md:h-60" aria-hidden="true">
-            {/* head */}
-            <circle cx="80" cy="70" r="28" fill="#F2F4EE" stroke="#0A0C0A" strokeWidth="4" />
-            {/* stern, pinched eyebrows */}
-            <line x1="56" y1="61" x2="74" y2="70" stroke="#0A0C0A" strokeWidth="5" strokeLinecap="round" />
-            <line x1="104" y1="61" x2="86" y2="70" stroke="#0A0C0A" strokeWidth="5" strokeLinecap="round" />
-            {/* big intense eyes */}
-            <circle cx="70" cy="77" r="8" fill="#F2F4EE" stroke="#0A0C0A" strokeWidth="3" />
-            <circle cx="70" cy="77" r="3.5" fill="#0A0C0A" />
-            <circle cx="92" cy="77" r="8" fill="#F2F4EE" stroke="#0A0C0A" strokeWidth="3" />
-            <circle cx="92" cy="77" r="3.5" fill="#0A0C0A" />
-            {/* flat stern mouth */}
-            <line x1="72" y1="93" x2="90" y2="93" stroke="#0A0C0A" strokeWidth="3" strokeLinecap="round" />
-            {/* neck */}
-            <rect x="72" y="97" width="16" height="10" fill="#F2F4EE" />
-            {/* torso + shorts */}
-            <path d="M50,109 L112,109 L104,215 L58,215 Z" fill="#0A0C0A" />
-            {/* white collar */}
-            <path d="M68,109 L94,109 L81,129 Z" fill="#F2F4EE" />
-            {/* arm at side */}
-            <path d="M52,111 L66,111 L60,165 L46,165 Z" fill="#0A0C0A" />
-            <circle cx="50" cy="169" r="9" fill="#F2F4EE" />
-            {/* arm raised, holding the card */}
-            <path d="M104,109 L120,109 L126,46 L110,46 Z" fill="#0A0C0A" />
-            <circle cx="118" cy="44" r="10" fill="#F2F4EE" />
-            <rect x="104" y="6" width="28" height="40" rx="4" fill="#E5383B" />
-            {/* legs */}
-            <rect x="62" y="215" width="14" height="35" fill="#F2F4EE" />
-            <rect x="86" y="215" width="14" height="35" fill="#F2F4EE" />
-            {/* shoes */}
-            <rect x="58" y="250" width="22" height="12" rx="4" fill="#0A0C0A" />
-            <rect x="82" y="250" width="22" height="12" rx="4" fill="#0A0C0A" />
-          </svg>
+      {/* decorative stadium-light beams */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-70">
+        <div className="absolute -top-1/4 left-1/4 h-[140%] w-16 rotate-[16deg] bg-gradient-to-b from-white/5 to-transparent blur-sm" />
+        <div className="absolute -top-1/4 left-[58%] h-[140%] w-12 rotate-[-12deg] bg-gradient-to-b from-booking/10 to-transparent blur-sm" />
+      </div>
+
+      <div className="relative mx-auto flex max-w-[1360px] flex-col gap-7 px-6 py-10 md:grid md:min-h-[600px] md:grid-cols-2 md:items-center md:gap-x-12 md:px-12 md:py-16">
+        {/* text block */}
+        <div className="flex animate-risefade flex-col gap-4 md:gap-5">
+          <div className="inline-flex items-center gap-2 self-start rounded-full border border-pitch-700 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-chalk-dim">
+            <span className="h-[5px] w-[5px] rounded-full bg-grass-bright" />
+            World Cup · Forfeit Edition
+          </div>
+
+          <h1 className="font-display text-[62px] font-bold uppercase leading-[0.82] tracking-tight md:text-[104px] md:leading-[0.78]">
+            <span className="text-chalk">Red</span>
+            <span className="text-sendoff md:hidden"> Card</span>
+            <span className="hidden text-sendoff md:block">Card</span>
+          </h1>
+
+          <p className="max-w-[420px] text-[14.5px] leading-[1.45] text-chalk-dim md:text-xl">
+            World Cup bets — but the loser pays in <span className="font-semibold text-booking">shame</span>, not money.
+          </p>
+
+          <p className="hidden max-w-[420px] text-sm leading-relaxed text-chalk-dim/70 md:block">
+            Predict every match with the group chat. Worst record at the final whistle gets sentenced to a forfeit the squad
+            votes on.
+          </p>
         </div>
 
-        <div className="w-full md:w-3/5 [perspective:1200px]">
-          <div className="animate-cardflip rounded-[2rem] bg-sendoff p-5 shadow-[0_0_120px_rgba(229,56,59,0.45)]">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-pitch-950/70">
+        {/* visual block: referee illustration + sample red card */}
+        <div className="relative flex flex-col gap-5 md:h-[420px] md:gap-0 [perspective:1200px]">
+          <Image
+            src="/ref.png"
+            alt=""
+            width={400}
+            height={600}
+            priority
+            className="mx-auto h-52 w-auto md:absolute md:left-[-10px] md:top-12 md:h-[330px] md:w-auto"
+          />
+
+          <div className="animate-cardflip rounded-[18px] bg-gradient-to-b from-sendoff to-sendoff-deep p-[17px] shadow-[0_24px_44px_-20px_rgba(229,56,59,0.75)] md:ml-auto md:w-[330px] md:rounded-[22px] md:p-[22px] md:shadow-[0_40px_70px_-26px_rgba(229,56,59,0.7)]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-pitch-950/60 md:text-[10.5px]">
               Red card · Final
             </p>
-            <h2 className="mt-3 font-display text-4xl uppercase leading-[0.9] text-pitch-950">
+            <h2 className="mt-[3px] font-display text-[40px] font-bold uppercase leading-[0.9] text-pitch-950 md:text-[58px] md:leading-[0.86]">
               Mus
             </h2>
-            <p className="mt-1 font-display text-sm uppercase text-pitch-950/80">
+            <p className="font-display text-[13px] font-semibold uppercase tracking-[0.06em] text-pitch-950/70 md:text-sm">
               Bottom of the table
             </p>
 
-            <div className="mt-4 rounded-2xl bg-pitch-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-sendoff">
+            <div className="mt-[14px] rounded-[13px] bg-pitch-950 p-[14px] md:mt-4 md:rounded-2xl md:p-4">
+              <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-sendoff md:text-[10px]">
                 The sentence · Tier 3
               </p>
-              <p className="mt-1 font-display text-2xl uppercase leading-tight text-chalk">The buzz cut</p>
-              <p className="mt-1 text-xs text-chalk-dim">
+              <p className="mt-[2px] font-display text-[23px] font-bold uppercase leading-tight text-chalk md:text-[28px]">
+                The buzz cut
+              </p>
+              <p className="mt-1 text-[12px] leading-[1.45] text-chalk-dim md:text-[13px]">
                 Clippers, grade 2 or shorter, full head, on camera. No full shave, no eyebrows.
               </p>
             </div>
 
-            <p className="mt-3 text-center text-[10px] uppercase tracking-widest text-pitch-950/60">
+            <p className="mt-3 text-center font-mono text-[9.5px] uppercase tracking-[0.18em] text-pitch-950/60 md:text-[10px]">
               No mercy. See you next tournament.
             </p>
           </div>
         </div>
-      </div>
 
-      <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
-        {isSignedIn ? (
-          <Link href="/groups" className="btn-primary w-full">Go to my groups</Link>
-        ) : (
-          <Link href="/login" className="btn-primary w-full">Sign in with Google</Link>
-        )}
-        <p className="text-center text-sm text-chalk-dim">
-          Sweepstakes are mild → spicy → extreme. Group host picks the limit.
-        </p>
+        {/* CTA block */}
+        <div className="flex animate-risefade flex-col gap-3 md:items-start">
+          {isSignedIn ? (
+            <Link href="/groups" className="btn-primary w-full md:w-auto md:px-10">
+              Go to my groups
+            </Link>
+          ) : (
+            <Link href="/login" className="btn-primary w-full md:w-auto md:px-10">
+              <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-white text-[12px] font-extrabold text-[#4285F4]">
+                G
+              </span>
+              Sign in with Google
+            </Link>
+          )}
+          <p className="text-center font-mono text-[11px] leading-relaxed text-chalk-dim/70 md:hidden">
+            Sweepstakes go mild → spicy → extreme.
+            <br />
+            Group host picks the limit.
+          </p>
+        </div>
       </div>
     </main>
   );

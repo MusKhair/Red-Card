@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
 export type Match = {
@@ -46,6 +47,49 @@ function fmtCountdown(ms: number): string {
   return `Locks in ${m}:${String(s % 60).padStart(2, "0")}`;
 }
 
+function clampScore(value: string, delta: number): string {
+  const n = parseInt(value, 10);
+  const current = Number.isNaN(n) ? 0 : n;
+  return String(Math.min(20, Math.max(0, current + delta)));
+}
+
+function Crest({ src, alt }: { src: string | null; alt: string }) {
+  if (!src) return <div className="h-7 w-7 shrink-0 rounded-full bg-pitch-700/50" aria-hidden />;
+  return <Image src={src} alt={alt} width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />;
+}
+
+function Stepper({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onChange(clampScore(value, 1))}
+        aria-label={`Increase ${label} prediction`}
+        className="flex h-7 w-7 items-center justify-center rounded-full bg-pitch-950 font-bold leading-none text-chalk active:scale-90"
+      >
+        +
+      </button>
+      <span className="w-8 text-center font-display text-3xl tabular-nums md:text-4xl">{value || "0"}</span>
+      <button
+        type="button"
+        onClick={() => onChange(clampScore(value, -1))}
+        aria-label={`Decrease ${label} prediction`}
+        className="flex h-7 w-7 items-center justify-center rounded-full bg-pitch-950 font-bold leading-none text-chalk active:scale-90"
+      >
+        −
+      </button>
+    </div>
+  );
+}
+
 export function MatchCard({
   match,
   stageLabel,
@@ -60,6 +104,10 @@ export function MatchCard({
   const msLeft = useCountdown(match.kickoff);
   const locked = msLeft <= 0;
   const live = match.status === "IN_PLAY" || match.status === "PAUSED";
+  const finished = match.status === "FINISHED";
+  const tbd = match.home_team === "TBD" && !finished;
+  const onLight = !finished && !tbd;
+  const editable = !locked && !tbd;
 
   const [home, setHome] = useState<string>(myPrediction ? String(myPrediction.pred_home) : "");
   const [away, setAway] = useState<string>(myPrediction ? String(myPrediction.pred_away) : "");
@@ -111,85 +159,132 @@ export function MatchCard({
     minute: "2-digit",
   });
 
+  const mutedText = onLight ? "text-pitch-500" : "text-chalk-dim";
+  const cardClass = tbd
+    ? "card"
+    : onLight
+      ? "rounded-2xl bg-chalk p-4 text-pitch-950"
+      : "rounded-2xl border border-pitch-700 bg-pitch-950 p-4 text-chalk";
+
   return (
-    <div className="card">
-      <div className="flex items-center justify-between text-xs text-chalk-dim">
-        <span>{stageLabel}</span>
+    <div className={cardClass}>
+      <div className="flex items-center justify-between">
+        <span className={`font-mono text-[10px] uppercase tracking-[0.18em] ${mutedText}`}>{stageLabel}</span>
         {live ? (
-          <span className="font-semibold text-grass">● LIVE</span>
-        ) : match.status === "FINISHED" ? (
-          <span>FT (90 min counts)</span>
+          <span className="rounded-full bg-grass px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-pitch-950">
+            ● Live
+          </span>
+        ) : finished ? (
+          <span className={`font-mono text-[10px] uppercase tracking-[0.18em] ${mutedText}`}>Full time</span>
         ) : (
-          <span className={locked ? "text-sendoff" : "text-booking"}>{fmtCountdown(msLeft)}</span>
+          <span className={`font-mono text-[10px] uppercase tracking-[0.18em] ${locked ? "text-sendoff" : "text-booking"}`}>
+            {fmtCountdown(msLeft)}
+          </span>
         )}
       </div>
 
       <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <p className="truncate text-right font-semibold">{match.home_team}</p>
-        <p className="font-display text-2xl tabular-nums">
-          {match.home_score ?? "–"} : {match.away_score ?? "–"}
-        </p>
-        <p className="truncate font-semibold">{match.away_team}</p>
-      </div>
-      <p className="mt-1 text-center text-xs text-chalk-dim">{kickoffLocal}</p>
+        <div className="flex items-center justify-end gap-2">
+          <p className="truncate text-right font-display text-base uppercase tracking-wide md:text-lg">{match.home_team}</p>
+          <Crest src={match.home_crest} alt="" />
+        </div>
 
-      {!locked && match.home_team !== "TBD" && (
-        <div className="mt-3 flex items-center justify-center gap-2">
-          <input
-            className="input w-16 text-center"
-            inputMode="numeric"
-            placeholder="0"
-            value={home}
-            onChange={(e) => setHome(e.target.value)}
-            aria-label={`${match.home_team} predicted goals`}
-          />
-          <span className="text-chalk-dim">:</span>
-          <input
-            className="input w-16 text-center"
-            inputMode="numeric"
-            placeholder="0"
-            value={away}
-            onChange={(e) => setAway(e.target.value)}
-            aria-label={`${match.away_team} predicted goals`}
-          />
-          <button onClick={save} disabled={saving} className="btn-primary px-4 py-3 text-sm disabled:opacity-50">
-            {saved ? "✓" : saving ? "…" : "Lock it"}
+        {editable ? (
+          <div className="flex items-center justify-center gap-3">
+            <Stepper value={home} onChange={setHome} label={match.home_team} />
+            <span className="font-display text-2xl text-pitch-500">:</span>
+            <Stepper value={away} onChange={setAway} label={match.away_team} />
+          </div>
+        ) : finished ? (
+          <p className="text-center font-display text-3xl tabular-nums md:text-4xl">
+            {match.home_score ?? "–"} : {match.away_score ?? "–"}
+          </p>
+        ) : locked && pred ? (
+          <p className="text-center font-display text-3xl tabular-nums md:text-4xl">
+            {pred.pred_home} : {pred.pred_away}
+          </p>
+        ) : (
+          <p className={`text-center font-display text-3xl tabular-nums md:text-4xl ${mutedText}`}>– : –</p>
+        )}
+
+        <div className="flex items-center gap-2">
+          <Crest src={match.away_crest} alt="" />
+          <p className="truncate font-display text-base uppercase tracking-wide md:text-lg">{match.away_team}</p>
+        </div>
+      </div>
+      <p className={`mt-1 text-center text-xs ${mutedText}`}>{kickoffLocal}</p>
+
+      {editable && (
+        <>
+          <button onClick={save} disabled={saving} className="btn-primary mt-3 w-full disabled:opacity-50">
+            {saved ? "✓ Locked in" : saving ? "Locking…" : "Lock it"}
           </button>
+          {error && <p className="mt-2 text-center text-xs text-sendoff">{error}</p>}
+        </>
+      )}
+
+      {!editable && !tbd && !finished && (
+        <div className="mt-3 flex flex-col items-center gap-1">
+          <span className="rounded-full bg-pitch-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-chalk-dim">
+            Locked
+          </span>
+          {pred ? (
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-grass-deep">Your call is in</p>
+          ) : (
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-sendoff">No prediction — 0 pts locked in</p>
+          )}
         </div>
       )}
 
-      {(locked || match.status === "FINISHED") && pred && (
-        <p className="mt-2 text-center text-xs text-chalk-dim">
-          You said {pred.pred_home}:{pred.pred_away}
-          {pred.points !== null && (
-            <span className={pred.points > 0 ? "ml-2 font-semibold text-grass" : "ml-2 text-sendoff"}>
-              {pred.points > 0 ? `+${pred.points} pts` : "0 pts"}
-            </span>
+      {finished && (
+        <div className="mt-3 flex flex-col items-center gap-1">
+          {pred ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-chalk-dim">
+                  You said {pred.pred_home}:{pred.pred_away}
+                </span>
+                <span
+                  className={`rounded-full px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                    pred.points !== null && pred.points > 0 ? "bg-grass-bright text-pitch-950" : "bg-pitch-800 text-chalk-dim"
+                  }`}
+                >
+                  {pred.points !== null ? (pred.points > 0 ? `+${pred.points} pts` : "0 pts") : "—"}
+                </span>
+              </div>
+              {pred.points !== null && (
+                <p
+                  className={`font-mono text-[10px] uppercase tracking-[0.25em] ${
+                    pred.points > 0 ? "text-grass-bright" : "text-sendoff"
+                  }`}
+                >
+                  {pred.points === 5 ? "Nailed it" : pred.points === 3 ? "So close" : pred.points === 1 ? "Right call" : "Way off"}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-chalk-dim">No bet placed</p>
           )}
-        </p>
-      )}
-      {locked && !pred && match.status !== "FINISHED" && (
-        <p className="mt-2 text-center text-xs text-sendoff">No prediction — that&apos;s 0 pts, chief.</p>
+        </div>
       )}
 
-      {locked && (
-        <div className="mt-3 border-t border-pitch-800 pt-2">
-          <p className="eyebrow">What the squad said</p>
+      {locked && !tbd && (
+        <div className={`mt-3 border-t pt-2 ${onLight ? "border-pitch-950/10" : "border-pitch-800"}`}>
+          <p className={`font-mono text-[10px] uppercase tracking-[0.2em] ${mutedText}`}>What the squad said</p>
           {otherPredictions.length === 0 ? (
-            <p className="mt-1 text-xs text-chalk-dim">No one else predicted this one.</p>
+            <p className={`mt-1 text-xs ${mutedText}`}>No one else predicted this one.</p>
           ) : (
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-chalk-dim">
+            <div className={`mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs ${mutedText}`}>
               {otherPredictions.map((p) => (
                 <span key={p.user_id}>
-                  <span className="text-chalk">{p.display_name}</span>: {p.pred_home}-{p.pred_away}
+                  <span className={onLight ? "text-pitch-950" : "text-chalk"}>{p.display_name}</span>: {p.pred_home}-
+                  {p.pred_away}
                 </span>
               ))}
             </div>
           )}
         </div>
       )}
-
-      {error && <p className="mt-2 text-center text-xs text-sendoff">{error}</p>}
     </div>
   );
 }

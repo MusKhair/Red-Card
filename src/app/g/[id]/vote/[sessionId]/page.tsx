@@ -53,32 +53,43 @@ export default async function VotePage({
   const loserName = (loserProfile as { display_name: string } | null)?.display_name ?? "They";
 
   return (
-    <main className="mx-auto max-w-md px-4 py-8">
-      <p className="eyebrow">
-        {STAGE_LABEL[session.stage] ?? session.stage}
-        {session.is_boss ? " · 👑 Boss Forfeit" : ""}
-      </p>
-      <h1 className="mt-1 font-display text-3xl uppercase">
-        {isLoser ? "Your fate, decided by the squad" : `Pick ${loserName}'s forfeit`}
-      </h1>
-      <p className="mt-2 text-sm text-chalk-dim">
-        {isLoser
-          ? "This one's about you — everyone else is picking your fate."
-          : `${loserName} finished bottom. Choose their sentence from these 3 options.`}
-      </p>
+    <main className="relative min-h-dvh overflow-hidden bg-pitch-950">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(420px_320px_at_50%_0%,rgba(229,56,59,0.25),transparent_70%)] md:bg-[radial-gradient(640px_440px_at_50%_-5%,rgba(229,56,59,0.22),transparent_72%)]" />
 
-      <VoteSession
-        sessionId={sessionId}
-        options={voteOptions}
-        isLoser={isLoser}
-        myVoteOptionId={myVote?.option_id ?? null}
-        castCount={castCount ?? 0}
-        eligibleCount={eligibleCount ?? 0}
-      />
+      <div className="relative mx-auto max-w-md px-5 py-8 md:max-w-3xl md:py-14">
+        <div className="inline-flex items-center gap-2 rounded-full border border-sendoff/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-chalk-dim">
+          <span className="h-[5px] w-[5px] rounded-full bg-sendoff" />
+          The squad decides
+          {session.is_boss ? " · 👑 Boss forfeit" : ""}
+        </div>
 
-      <Link href={`/g/${id}`} className="btn-ghost mt-4 block w-full text-center">
-        Back to group
-      </Link>
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">
+          {STAGE_LABEL[session.stage] ?? session.stage}
+        </p>
+
+        <h1 className="mt-1 font-display text-4xl font-bold uppercase leading-[0.95] md:text-6xl">
+          {isLoser ? "Your fate, decided by the squad" : `Pick ${loserName}'s punishment`}
+        </h1>
+
+        <p className="mt-3 max-w-lg text-sm text-chalk-dim md:text-base">
+          {isLoser
+            ? "This one's about you — everyone else is picking your fate."
+            : `${loserName} finished bottom. Choose their sentence from these 3 options.`}
+        </p>
+
+        <VoteSession
+          sessionId={sessionId}
+          options={voteOptions}
+          isLoser={isLoser}
+          myVoteOptionId={myVote?.option_id ?? null}
+          castCount={castCount ?? 0}
+          eligibleCount={eligibleCount ?? 0}
+        />
+
+        <Link href={`/g/${id}`} className="btn-ghost mt-4 block w-full text-center md:inline-block md:w-auto md:px-10">
+          Back to group
+        </Link>
+      </div>
     </main>
   );
 }

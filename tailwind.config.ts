@@ -9,11 +9,13 @@ export default {
         chalk: { DEFAULT: "#F2F4EE", dim: "#A8B0A2" },
         booking: { DEFAULT: "#FFD60A", deep: "#E0B400" },
         sendoff: { DEFAULT: "#E5383B", deep: "#B32326" },
-        grass: { DEFAULT: "#2DC653", deep: "#1F9C3F" }
+        grass: { DEFAULT: "#2DC653", deep: "#1F9C3F", bright: "#3DDC97", field: "#1A4228" },
+        royal: { DEFAULT: "#2342C9" }
       },
       fontFamily: {
         display: ["var(--font-display)"],
-        body: ["var(--font-body)"]
+        body: ["var(--font-body)"],
+        mono: ["var(--font-mono)"]
       },
       keyframes: {
         cardflip: {
