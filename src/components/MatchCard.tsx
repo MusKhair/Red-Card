@@ -112,13 +112,14 @@ export function MatchCard({
   const [home, setHome] = useState<string>(myPrediction ? String(myPrediction.pred_home) : "0");
   const [away, setAway] = useState<string>(myPrediction ? String(myPrediction.pred_away) : "0");
   const [pred, setPred] = useState<MyPrediction | null>(myPrediction ?? null);
-  const [saved, setSaved] = useState<boolean>(!!myPrediction);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setPred(myPrediction ?? null);
   }, [myPrediction]);
+
+  const isLocked = pred !== null && String(pred.pred_home) === home && String(pred.pred_away) === away;
 
   async function save() {
     setError(null);
@@ -147,8 +148,6 @@ export function MatchCard({
       return;
     }
     setPred({ match_id: match.id, pred_home: h, pred_away: a, points: null });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
   }
 
   const kickoffLocal = new Date(match.kickoff).toLocaleString(undefined, {
@@ -217,7 +216,7 @@ export function MatchCard({
       {editable && (
         <>
           <button onClick={save} disabled={saving} className="btn-primary mt-3 w-full disabled:opacity-50">
-            {saved ? "✓ Locked in" : saving ? "Locking…" : "Lock it"}
+            {isLocked ? "✓ Locked in" : saving ? "Locking…" : "Lock it"}
           </button>
           {error && <p className="mt-2 text-center text-xs text-sendoff">{error}</p>}
         </>

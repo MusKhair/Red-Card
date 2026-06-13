@@ -128,11 +128,15 @@ export function SettingsDrawer({
               <div>
                 <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Points</h3>
                 <ul className="mt-1 flex flex-col gap-1">
-                  <li><strong className="text-chalk">+5</strong> — exact score (e.g. you said 2-1, actual was 2-1)</li>
-                  <li><strong className="text-chalk">+3</strong> — correct goal difference (e.g. you said 3-2, actual was 2-1)</li>
-                  <li><strong className="text-chalk">+1</strong> — correct winner (e.g. you said 1-0, actual was 3-1, both home wins)</li>
-                  <li><strong className="text-chalk">0</strong> — wrong</li>
+                  <li><strong className="text-chalk">+5</strong> — exact score (e.g. you said 2-1, actual was 2-1; or you said 1-1, actual was 1-1)</li>
+                  <li><strong className="text-chalk">+3</strong> — correct goal difference (e.g. you said 3-2, actual was 2-1; or you said 1-1, actual was 2-2 — both draws, same goal difference)</li>
+                  <li><strong className="text-chalk">+1</strong> — correct winner only (e.g. you said 1-0 home win, actual was 3-1 home win)</li>
+                  <li><strong className="text-chalk">0</strong> — wrong outcome</li>
                 </ul>
+                <p className="mt-2">
+                  Draws are scored the same way as any other prediction — predict a draw, get the exact score = +5,
+                  or get any draw correctly = +3.
+                </p>
               </div>
 
               <div>
