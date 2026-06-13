@@ -32,7 +32,10 @@ create table public.groups (
   host_id uuid not null references public.profiles(id),
   max_tier int not null default 1 check (max_tier between 1 and 3),
   invite_code text not null unique default upper(substr(md5(random()::text), 1, 6)),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- stage8: NULL = continue (count every prediction); non-null = only count
+  -- predictions for matches with kickoff >= this timestamp ("start fresh")
+  point_cutoff timestamptz default null
 );
 
 create table public.group_members (
@@ -197,6 +200,7 @@ create table public.tournament_predictions (
   golden_boot_player text,
   winner_points int,
   golden_boot_points int,
+  created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
@@ -216,8 +220,10 @@ create table public.squads (
 );
 
 -- ============ LEADERBOARD VIEW ============
--- Pre-aggregate each point source before joining to avoid row fan-out
--- double-counting across predictions / player_predictions / tournament_predictions.
+-- predictions / player_predictions / tournament_predictions are global (one row per
+-- user, not per-group), so per-group point_cutoff filtering can't be pre-aggregated
+-- once globally. Each (group, member) pair gets its own lateral aggregate, filtered by
+-- that group's point_cutoff. When point_cutoff IS NULL every filter below is a no-op.
 create or replace view public.group_leaderboard
 with (security_invoker = true) as
 select
@@ -233,16 +239,35 @@ select
   )::int as points,
   coalesce(pr.exact_hits, 0)::int as exact_hits
 from public.group_members gm
+join public.groups g on g.id = gm.group_id
 join public.profiles p on p.id = gm.user_id
-left join (
-  select user_id, sum(points) as total, count(*) filter (where points = 5) as exact_hits
-  from public.predictions where points is not null group by user_id
-) pr on pr.user_id = gm.user_id
-left join (
-  select user_id, sum(points) as total
-  from public.player_predictions where points is not null group by user_id
-) pp on pp.user_id = gm.user_id
-left join public.tournament_predictions tp on tp.user_id = gm.user_id;
+left join lateral (
+  select
+    sum(pr2.points) as total,
+    count(*) filter (where pr2.points = 5) as exact_hits
+  from public.predictions pr2
+  join public.matches m on m.id = pr2.match_id
+  where pr2.user_id = gm.user_id
+    and pr2.points is not null
+    and (g.point_cutoff is null or m.kickoff >= g.point_cutoff)
+) pr on true
+left join lateral (
+  select sum(pp2.points) as total
+  from public.player_predictions pp2
+  join public.matches m on m.id = pp2.match_id
+  where pp2.user_id = gm.user_id
+    and pp2.points is not null
+    and (g.point_cutoff is null or m.kickoff >= g.point_cutoff)
+) pp on true
+left join lateral (
+  select
+    case when g.point_cutoff is null or tpr.created_at >= g.point_cutoff
+      then tpr.winner_points else 0 end as winner_points,
+    case when g.point_cutoff is null or tpr.created_at >= g.point_cutoff
+      then tpr.golden_boot_points else 0 end as golden_boot_points
+  from public.tournament_predictions tpr
+  where tpr.user_id = gm.user_id
+) tp on true;
 
 -- ============ JOIN-BY-CODE (security definer dodges RLS chicken-and-egg) ============
 create or replace function public.get_group_by_code(code text)

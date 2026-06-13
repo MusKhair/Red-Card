@@ -9,7 +9,14 @@ import { BetsPanel, type TournamentPrediction, type TournamentResolutions } from
 import { InviteShare } from "@/components/InviteShare";
 import { STAGE_LABEL, VOTE_STAGES } from "@/lib/stages";
 
-type Group = { id: string; name: string; host_id: string; max_tier: number; invite_code: string };
+type Group = {
+  id: string;
+  name: string;
+  host_id: string;
+  max_tier: number;
+  invite_code: string;
+  point_cutoff: string | null;
+};
 
 const TABS = ["fixtures", "table", "bets", "forfeits"] as const;
 
@@ -81,6 +88,14 @@ export function GroupTabs({
         <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-10">
           <p className="eyebrow">Group</p>
           <h1 className="mt-1 font-display text-[42px] font-bold uppercase leading-[0.95] md:text-[54px]">{group.name}</h1>
+          <p className="eyebrow mt-1">
+            {group.point_cutoff
+              ? `Started fresh · ${new Date(group.point_cutoff).toLocaleDateString(undefined, {
+                  day: "numeric",
+                  month: "short",
+                })}`
+              : "All tournament points count"}
+          </p>
 
           <InviteShare code={group.invite_code} groupName={group.name} />
 

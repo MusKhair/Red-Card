@@ -14,6 +14,7 @@ export default function NewGroupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [tier, setTier] = useState(2);
+  const [pointsMode, setPointsMode] = useState<"continue" | "fresh">("continue");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -28,7 +29,12 @@ export default function NewGroupPage() {
 
     const { data: group, error: gErr } = await supabase
       .from("groups")
-      .insert({ name: name.trim(), host_id: auth.user.id, max_tier: tier })
+      .insert({
+        name: name.trim(),
+        host_id: auth.user.id,
+        max_tier: tier,
+        point_cutoff: pointsMode === "fresh" ? new Date().toISOString() : null,
+      })
       .select("id, invite_code")
       .single();
     if (gErr || !group) {
@@ -80,6 +86,48 @@ export default function NewGroupPage() {
             <p className="mt-1 text-xs text-chalk-dim">{t.blurb}</p>
           </button>
         ))}
+      </div>
+
+      <p className="mt-6 text-sm text-chalk-dim">How are points counted?</p>
+      <div className="mt-2 flex flex-col gap-2">
+        <label
+          className={`card flex items-start gap-3 text-left transition active:scale-[0.98] ${
+            pointsMode === "continue" ? "border-booking" : ""
+          }`}
+        >
+          <input
+            type="radio"
+            name="pointsMode"
+            checked={pointsMode === "continue"}
+            onChange={() => setPointsMode("continue")}
+            className="mt-1.5"
+          />
+          <span>
+            <p className="font-display text-xl uppercase">Continue tournament points</p>
+            <p className="mt-1 text-xs text-chalk-dim">
+              Every prediction members made this World Cup counts in this group&apos;s leaderboard.
+            </p>
+          </span>
+        </label>
+        <label
+          className={`card flex items-start gap-3 text-left transition active:scale-[0.98] ${
+            pointsMode === "fresh" ? "border-booking" : ""
+          }`}
+        >
+          <input
+            type="radio"
+            name="pointsMode"
+            checked={pointsMode === "fresh"}
+            onChange={() => setPointsMode("fresh")}
+            className="mt-1.5"
+          />
+          <span>
+            <p className="font-display text-xl uppercase">Start fresh</p>
+            <p className="mt-1 text-xs text-chalk-dim">
+              Only matches that haven&apos;t kicked off yet will count. Everyone starts at 0.
+            </p>
+          </span>
+        </label>
       </div>
 
       {error && <p className="mt-4 text-sm text-sendoff">{error}</p>}

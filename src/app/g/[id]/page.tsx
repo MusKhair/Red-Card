@@ -19,7 +19,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
 
   const { data: group } = await supabase
     .from("groups")
-    .select("id, name, host_id, max_tier, invite_code")
+    .select("id, name, host_id, max_tier, invite_code, point_cutoff")
     .eq("id", id)
     .single();
   if (!group) redirect("/groups");
