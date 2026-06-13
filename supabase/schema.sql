@@ -314,6 +314,16 @@ create policy "members: read own groups" on public.group_members
 create policy "members: update self" on public.group_members
   for update to authenticated using (user_id = auth.uid());
 
+-- stage7: leave group / delete group / kick member
+create policy "groups: host deletes own group" on public.groups
+  for delete to authenticated using (host_id = auth.uid());
+create policy "members: leave own group" on public.group_members
+  for delete to authenticated using (user_id = auth.uid());
+create policy "members: host removes member" on public.group_members
+  for delete to authenticated using (
+    exists (select 1 from groups g where g.id = group_id and g.host_id = auth.uid())
+  );
+
 create policy "matches: read all (authed)" on public.matches
   for select to authenticated using (true);
 

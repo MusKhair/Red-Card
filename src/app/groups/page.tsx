@@ -44,7 +44,7 @@ export default async function GroupsPage() {
       </div>
 
       <Link href="/groups/new" className="btn-primary mt-8 w-full">Create a group</Link>
-      <Link href="/join" className="btn-ghost mt-3 w-full">Join a group</Link>
+      <Link href="/join" className="btn-ghost mt-3 w-full">Join another group</Link>
     </main>
   );
 }

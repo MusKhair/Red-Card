@@ -109,8 +109,8 @@ export function MatchCard({
   const onLight = !finished && !tbd;
   const editable = !locked && !tbd;
 
-  const [home, setHome] = useState<string>(myPrediction ? String(myPrediction.pred_home) : "");
-  const [away, setAway] = useState<string>(myPrediction ? String(myPrediction.pred_away) : "");
+  const [home, setHome] = useState<string>(myPrediction ? String(myPrediction.pred_home) : "0");
+  const [away, setAway] = useState<string>(myPrediction ? String(myPrediction.pred_away) : "0");
   const [pred, setPred] = useState<MyPrediction | null>(myPrediction ?? null);
   const [saved, setSaved] = useState<boolean>(!!myPrediction);
   const [saving, setSaving] = useState(false);

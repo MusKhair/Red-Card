@@ -74,6 +74,10 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     .in("user_id", memberIds.length ? memberIds : [auth.user.id]);
 
   const displayNameByUserId = new Map(memberRows.map((m) => [m.user_id, m.profiles?.display_name ?? "?"]));
+  const members = memberRows.map((m) => ({
+    user_id: m.user_id,
+    display_name: displayNameByUserId.get(m.user_id) ?? "?",
+  }));
   const groupPredictions: GroupPrediction[] = (groupPredictionsRaw ?? []).map((p) => ({
     match_id: p.match_id,
     user_id: p.user_id,
@@ -121,6 +125,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       tournamentPrediction={tournamentPrediction ?? null}
       tournamentResolutions={tournamentResolutions}
       leaderboardPosition={leaderboardPosition}
+      members={members}
     />
   );
 }
