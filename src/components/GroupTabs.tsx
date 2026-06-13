@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { MatchCard, type Match, type MyPrediction, type GroupPrediction } from "@/components/MatchCard";
 import { Leaderboard, type BoardRow } from "@/components/Leaderboard";
-import { ForfeitsPanel, type ForfeitRow } from "@/components/ForfeitsPanel";
+import { ForfeitsPanel, type ForfeitRow, type CustomForfeitRow } from "@/components/ForfeitsPanel";
 import { BetsPanel, type TournamentPrediction, type TournamentResolutions } from "@/components/BetsPanel";
 import { InviteShare } from "@/components/InviteShare";
 import { STAGE_LABEL, VOTE_STAGES } from "@/lib/stages";
@@ -36,6 +36,9 @@ export function GroupTabs({
   tournamentPrediction,
   tournamentResolutions,
   leaderboardPosition,
+  customForfeits,
+  memberCount,
+  maxTier,
 }: {
   group: Group;
   isHost: boolean;
@@ -52,6 +55,9 @@ export function GroupTabs({
   tournamentPrediction: TournamentPrediction;
   tournamentResolutions: TournamentResolutions;
   leaderboardPosition: number | null;
+  customForfeits: CustomForfeitRow[];
+  memberCount: number;
+  maxTier: number;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("fixtures");
 
@@ -191,6 +197,9 @@ export function GroupTabs({
             stages={VOTE_STAGES}
             fallbackStages={fallbackStages}
             openVoteSessionId={openVoteSessionId}
+            customForfeits={customForfeits}
+            memberCount={memberCount}
+            maxTier={maxTier}
           />
         </div>
       )}

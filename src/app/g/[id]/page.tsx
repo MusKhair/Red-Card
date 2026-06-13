@@ -2,11 +2,29 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GroupTabs } from "@/components/GroupTabs";
 import type { GroupPrediction } from "@/components/MatchCard";
+import type { CustomForfeitRow } from "@/components/ForfeitsPanel";
 import { VOTE_STAGES } from "@/lib/stages";
 import { TOURNAMENT_PREDICTIONS_LOCK } from "@/lib/tournament";
 import { syncMatchesAndScore } from "@/lib/football";
 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
+
+type RawCustomForfeit = {
+  id: string;
+  title: string;
+  description: string;
+  tier: number;
+  proof: string;
+  status: "pending_approval" | "approved" | "rejected";
+  proposer_id: string;
+  profiles: { display_name: string } | null;
+};
+
+type RawApprovalVote = {
+  custom_forfeit_id: string;
+  user_id: string;
+  approve: boolean;
+};
 
 export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,6 +53,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     { data: tournamentPrediction },
     { data: awardResolutions },
     { data: groupMembers },
+    { data: customForfeitsRaw },
   ] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff", { ascending: true }),
     supabase
@@ -61,6 +80,12 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       .maybeSingle(),
     supabase.from("tournament_award_resolutions").select("award, winning_value"),
     supabase.from("group_members").select("user_id, profiles(display_name)").eq("group_id", id),
+    supabase
+      .from("custom_forfeits")
+      .select("id, title, description, tier, proof, status, proposer_id, profiles(display_name)")
+      .eq("group_id", id)
+      .in("status", ["pending_approval", "approved"])
+      .order("created_at", { ascending: true }),
   ]);
 
   const memberRows = (groupMembers ?? []) as unknown as {
@@ -81,6 +106,41 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     pred_home: p.pred_home,
     pred_away: p.pred_away,
   }));
+
+  const customForfeitRows = (customForfeitsRaw ?? []) as unknown as RawCustomForfeit[];
+  const pendingCustomIds = customForfeitRows.filter((c) => c.status === "pending_approval").map((c) => c.id);
+  const { data: approvalVotesRaw } = pendingCustomIds.length
+    ? await supabase
+        .from("custom_forfeit_approval_votes")
+        .select("custom_forfeit_id, user_id, approve")
+        .in("custom_forfeit_id", pendingCustomIds)
+    : { data: [] as RawApprovalVote[] };
+
+  const votesByCustom = new Map<string, { yes: number; no: number; myVote: boolean | null }>();
+  for (const v of approvalVotesRaw ?? []) {
+    const entry = votesByCustom.get(v.custom_forfeit_id) ?? { yes: 0, no: 0, myVote: null };
+    if (v.approve) entry.yes += 1;
+    else entry.no += 1;
+    if (v.user_id === auth.user.id) entry.myVote = v.approve;
+    votesByCustom.set(v.custom_forfeit_id, entry);
+  }
+
+  const customForfeits: CustomForfeitRow[] = customForfeitRows.map((c) => {
+    const votes = votesByCustom.get(c.id) ?? { yes: 0, no: 0, myVote: null };
+    return {
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      tier: c.tier,
+      proof: c.proof,
+      status: c.status as "pending_approval" | "approved",
+      proposerName: c.profiles?.display_name ?? "?",
+      isProposer: c.proposer_id === auth.user.id,
+      yesCount: votes.yes,
+      noCount: votes.no,
+      myVote: votes.myVote,
+    };
+  });
 
   const showTournamentBanner =
     !tournamentPrediction && Date.now() < new Date(TOURNAMENT_PREDICTIONS_LOCK).getTime();
@@ -121,6 +181,9 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       tournamentPrediction={tournamentPrediction ?? null}
       tournamentResolutions={tournamentResolutions}
       leaderboardPosition={leaderboardPosition}
+      customForfeits={customForfeits}
+      memberCount={memberIds.length}
+      maxTier={group.max_tier}
     />
   );
 }
