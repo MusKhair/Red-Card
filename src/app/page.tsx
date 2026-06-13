@@ -9,31 +9,6 @@ export default async function Landing() {
 
   return (
     <main className="relative min-h-dvh overflow-hidden bg-pitch-950 bg-[radial-gradient(440px_300px_at_50%_6%,rgba(229,56,59,0.30),transparent_64%),radial-gradient(280px_200px_at_50%_2%,rgba(255,214,10,0.10),transparent_60%)] md:bg-[radial-gradient(700px_420px_at_80%_30%,rgba(229,56,59,0.16),transparent_62%)]">
-      {/* desktop top bar */}
-      <div className="hidden items-center justify-between border-b border-pitch-800 px-8 py-4 md:flex">
-        <div className="font-display text-lg font-bold uppercase tracking-wide">
-          <span className="text-chalk">Red</span> <span className="text-sendoff">Card</span>
-        </div>
-        {isSignedIn ? (
-          <Link
-            href="/groups"
-            className="flex items-center gap-2 rounded-full border border-pitch-700 px-3.5 py-2 text-xs font-semibold uppercase tracking-wide text-chalk"
-          >
-            My groups
-          </Link>
-        ) : (
-          <Link
-            href="/login"
-            className="flex items-center gap-2 rounded-full border border-pitch-700 px-3.5 py-2 text-xs font-semibold text-chalk"
-          >
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-extrabold text-[#4285F4]">
-              G
-            </span>
-            Sign in
-          </Link>
-        )}
-      </div>
-
       {/* decorative stadium-light beams */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-70">
         <div className="absolute -top-1/4 left-1/4 h-[140%] w-16 rotate-[16deg] bg-gradient-to-b from-white/5 to-transparent blur-sm" />

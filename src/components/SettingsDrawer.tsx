@@ -1,0 +1,191 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { GroupSettings, type GroupMember } from "@/components/GroupSettings";
+
+const GROUP_ID_RE = /^\/g\/([^/]+)/;
+
+type GroupSettingsData = {
+  groupName: string;
+  isHost: boolean;
+  currentUserId: string;
+  members: GroupMember[];
+};
+
+export function SettingsDrawer({
+  open,
+  onClose,
+  isSignedIn,
+}: {
+  open: boolean;
+  onClose: () => void;
+  isSignedIn: boolean;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const groupId = pathname.match(GROUP_ID_RE)?.[1] ?? null;
+
+  const [data, setData] = useState<GroupSettingsData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  useEffect(() => {
+    if (!open || !groupId) {
+      setData(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/groups/${groupId}/settings`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled) setData(json);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, groupId, reloadToken]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  async function signOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    onClose();
+    router.push("/");
+    router.refresh();
+  }
+
+  return (
+    <div className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
+      <div
+        className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
+        onClick={onClose}
+      />
+      <div
+        className={`absolute right-0 top-0 flex h-full w-full max-w-sm flex-col border-l border-pitch-800 bg-pitch-950 transition-transform duration-300 ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between border-b border-pitch-800 px-5 py-4">
+          <p className="font-display text-2xl font-bold uppercase tracking-wide">Menu</p>
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-pitch-700 text-chalk-dim"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          {groupId && (
+            <section className="mb-6">
+              <p className="eyebrow">This group</p>
+              {loading && !data && <p className="mt-3 text-sm text-chalk-dim">Loading…</p>}
+              {data && (
+                <div className="mt-3">
+                  <GroupSettings
+                    groupId={groupId}
+                    groupName={data.groupName}
+                    isHost={data.isHost}
+                    currentUserId={data.currentUserId}
+                    members={data.members}
+                    onLeaveOrDelete={onClose}
+                    onMemberRemoved={() => setReloadToken((t) => t + 1)}
+                  />
+                </div>
+              )}
+            </section>
+          )}
+
+          <section>
+            <p className="eyebrow">How to play</p>
+
+            <div className="mt-3 flex flex-col gap-5 text-sm leading-relaxed text-chalk-dim">
+              <div>
+                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Predict every match</h3>
+                <p className="mt-1">
+                  For each match, predict the final score before kickoff. Once it kicks off, your pick is locked.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Points</h3>
+                <ul className="mt-1 flex flex-col gap-1">
+                  <li><strong className="text-chalk">+5</strong> — exact score (e.g. you said 2-1, actual was 2-1)</li>
+                  <li><strong className="text-chalk">+3</strong> — correct goal difference (e.g. you said 3-2, actual was 2-1)</li>
+                  <li><strong className="text-chalk">+1</strong> — correct winner (e.g. you said 1-0, actual was 3-1, both home wins)</li>
+                  <li><strong className="text-chalk">0</strong> — wrong</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Tournament bets (bonus picks, lock June 20)</h3>
+                <ul className="mt-1 flex flex-col gap-1">
+                  <li><strong className="text-chalk">Tournament Winner</strong>: pick the team you think wins it all. +15 pts if right.</li>
+                  <li><strong className="text-chalk">Golden Boot</strong>: pick the top scorer of the tournament. +10 pts if right.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Who gets the red card</h3>
+                <p className="mt-1">
+                  At the end of each stage (Group, R32, R16, QF, SF, Final), whoever&apos;s at the bottom of the
+                  leaderboard gets a forfeit. Group stage = mild, knockouts = spicy, Semi/Final = extreme.
+                </p>
+                <p className="mt-2">
+                  The Final loser gets the <strong className="text-chalk">BOSS FORFEIT</strong> — the worst one.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">How the forfeit is picked</h3>
+                <ol className="mt-1 flex list-decimal flex-col gap-1 pl-4">
+                  <li>The host opens the vote (or any member can if the host&apos;s MIA for 48h)</li>
+                  <li>3 random forfeits from the right tier appear</li>
+                  <li>The squad votes (the loser can&apos;t vote on their own forfeit)</li>
+                  <li>Highest votes wins (random tiebreaker)</li>
+                </ol>
+              </div>
+
+              <div>
+                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Veto</h3>
+                <p className="mt-1">You get ONE veto per tournament. Use it to reject your forfeit and trigger a re-vote.</p>
+              </div>
+
+              <div>
+                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Proof</h3>
+                <p className="mt-1">
+                  Once you&apos;ve done your forfeit, post proof (photo, video, or screenshot) to the group chat. Host
+                  marks it complete.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {isSignedIn && (
+            <button onClick={signOut} className="btn-ghost mt-6 w-full">
+              Sign out
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

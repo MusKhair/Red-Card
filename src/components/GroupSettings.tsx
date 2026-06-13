@@ -11,12 +11,16 @@ export function GroupSettings({
   isHost,
   currentUserId,
   members,
+  onLeaveOrDelete,
+  onMemberRemoved,
 }: {
   groupId: string;
   groupName: string;
   isHost: boolean;
   currentUserId: string;
   members: GroupMember[];
+  onLeaveOrDelete?: () => void;
+  onMemberRemoved?: () => void;
 }) {
   const router = useRouter();
   const [leaveConfirming, setLeaveConfirming] = useState(false);
@@ -36,6 +40,7 @@ export function GroupSettings({
       setError(json.error ?? "Something went wrong.");
       return;
     }
+    onLeaveOrDelete?.();
     router.push("/groups");
   }
 
@@ -49,6 +54,7 @@ export function GroupSettings({
       setError(json.error ?? "Something went wrong.");
       return;
     }
+    onLeaveOrDelete?.();
     router.push("/groups");
   }
 
@@ -63,6 +69,7 @@ export function GroupSettings({
       return;
     }
     setKickingUserId(null);
+    onMemberRemoved?.();
     router.refresh();
   }
 

@@ -7,12 +7,11 @@ import { Leaderboard, type BoardRow } from "@/components/Leaderboard";
 import { ForfeitsPanel, type ForfeitRow } from "@/components/ForfeitsPanel";
 import { BetsPanel, type TournamentPrediction, type TournamentResolutions } from "@/components/BetsPanel";
 import { InviteShare } from "@/components/InviteShare";
-import { GroupSettings, type GroupMember } from "@/components/GroupSettings";
 import { STAGE_LABEL, VOTE_STAGES } from "@/lib/stages";
 
 type Group = { id: string; name: string; host_id: string; max_tier: number; invite_code: string };
 
-const TABS = ["fixtures", "table", "bets", "forfeits", "settings"] as const;
+const TABS = ["fixtures", "table", "bets", "forfeits"] as const;
 
 export function GroupTabs({
   group,
@@ -30,7 +29,6 @@ export function GroupTabs({
   tournamentPrediction,
   tournamentResolutions,
   leaderboardPosition,
-  members,
 }: {
   group: Group;
   isHost: boolean;
@@ -47,7 +45,6 @@ export function GroupTabs({
   tournamentPrediction: TournamentPrediction;
   tournamentResolutions: TournamentResolutions;
   leaderboardPosition: number | null;
-  members: GroupMember[];
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("fixtures");
 
@@ -97,13 +94,13 @@ export function GroupTabs({
       </div>
 
       {/* tab bar */}
-      <div className="sticky top-0 z-10 overflow-x-auto border-b border-pitch-800 bg-pitch-950/95 backdrop-blur">
+      <div className="sticky top-12 z-10 overflow-x-auto border-b border-pitch-800 bg-pitch-950/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl gap-1 px-4 py-2 md:px-8">
           {TABS.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`shrink-0 basis-[22%] rounded-xl px-3 py-2 font-display text-sm uppercase tracking-wide transition md:basis-0 md:flex-1 ${
+              className={`shrink-0 basis-[27%] rounded-xl px-3 py-2 font-display text-sm uppercase tracking-wide transition md:basis-0 md:flex-1 ${
                 tab === t ? "bg-booking text-pitch-950" : "text-chalk-dim"
               }`}
             >
@@ -179,18 +176,6 @@ export function GroupTabs({
             stages={VOTE_STAGES}
             fallbackStages={fallbackStages}
             openVoteSessionId={openVoteSessionId}
-          />
-        </div>
-      )}
-
-      {tab === "settings" && (
-        <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-8">
-          <GroupSettings
-            groupId={group.id}
-            groupName={group.name}
-            isHost={isHost}
-            currentUserId={currentUserId}
-            members={members}
           />
         </div>
       )}
