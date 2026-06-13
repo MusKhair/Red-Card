@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Oswald, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalHeader } from "@/components/GlobalHeader";
+import { TermsModal } from "@/components/TermsModal";
 import { createClient } from "@/lib/supabase/server";
 
 const display = Oswald({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-display" });
@@ -21,10 +22,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
 
+  let needsTermsAcceptance = false;
+  if (auth.user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("terms_accepted_at")
+      .eq("id", auth.user.id)
+      .single();
+    needsTermsAcceptance = !profile?.terms_accepted_at;
+  }
+
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="min-h-dvh">
         <GlobalHeader isSignedIn={!!auth.user} />
+        <TermsModal show={needsTermsAcceptance} />
         {children}
       </body>
     </html>

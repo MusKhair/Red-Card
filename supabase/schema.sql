@@ -6,7 +6,9 @@ create table public.profiles (
   display_name text not null default 'Player',
   avatar_url text,
   dob date,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Stage 9: null until the user accepts the Terms & Conditions modal.
+  terms_accepted_at timestamptz default null
 );
 
 create or replace function public.handle_new_user()

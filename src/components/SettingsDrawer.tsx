@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { GroupSettings, type GroupMember } from "@/components/GroupSettings";
+import { TermsContent } from "@/components/TermsContent";
 
 const GROUP_ID_RE = /^\/g\/([^/]+)/;
 
@@ -30,6 +31,11 @@ export function SettingsDrawer({
   const [data, setData] = useState<GroupSettingsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
+  const [view, setView] = useState<"menu" | "terms">("menu");
+
+  useEffect(() => {
+    if (!open) setView("menu");
+  }, [open]);
 
   useEffect(() => {
     if (!open || !groupId) {
@@ -94,6 +100,17 @@ export function SettingsDrawer({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
+          {view === "terms" ? (
+            <div>
+              <button onClick={() => setView("menu")} className="text-xs uppercase tracking-wide text-chalk-dim">
+                ← Back
+              </button>
+              <div className="mt-4">
+                <TermsContent />
+              </div>
+            </div>
+          ) : (
+            <>
           {groupId && (
             <section className="mb-6">
               <p className="eyebrow">This group</p>
@@ -183,10 +200,19 @@ export function SettingsDrawer({
             </div>
           </section>
 
+          <button
+            onClick={() => setView("terms")}
+            className="mt-6 text-xs uppercase tracking-wide text-chalk-dim underline underline-offset-2"
+          >
+            Terms &amp; Conditions
+          </button>
+
           {isSignedIn && (
             <button onClick={signOut} className="btn-ghost mt-6 w-full">
               Sign out
             </button>
+          )}
+            </>
           )}
         </div>
       </div>
