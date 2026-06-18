@@ -75,7 +75,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     supabase.from("forfeit_vote_sessions").select("id").eq("group_id", id).eq("status", "open").maybeSingle(),
     supabase
       .from("tournament_predictions")
-      .select("winner_team, golden_boot_player, winner_points, golden_boot_points")
+      .select("winner_team, golden_boot_player, golden_ball_player, winner_points, golden_boot_points, golden_ball_points")
       .eq("user_id", auth.user.id)
       .maybeSingle(),
     supabase.from("tournament_award_resolutions").select("award, winning_value"),
@@ -148,6 +148,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
   const tournamentResolutions = {
     tournamentWinner: awardResolutions?.find((r) => r.award === "tournament_winner")?.winning_value ?? null,
     goldenBootWinner: awardResolutions?.find((r) => r.award === "golden_boot")?.winning_value ?? null,
+    goldenBallWinner: awardResolutions?.find((r) => r.award === "golden_ball")?.winning_value ?? null,
   };
 
   const leaderboardIndex = (board ?? []).findIndex((r) => r.user_id === auth.user.id);

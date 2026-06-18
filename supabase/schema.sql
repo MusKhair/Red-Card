@@ -201,14 +201,16 @@ create table public.tournament_predictions (
   user_id uuid primary key references public.profiles(id) on delete cascade,
   winner_team text,
   golden_boot_player text,
+  golden_ball_player text,
   winner_points int,
   golden_boot_points int,
+  golden_ball_points int,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 create table public.tournament_award_resolutions (
-  award text primary key check (award in ('tournament_winner','golden_boot')),
+  award text primary key check (award in ('tournament_winner','golden_boot','golden_ball')),
   resolved_at timestamptz not null default now(),
   winning_value text not null,
   details jsonb
@@ -239,6 +241,7 @@ select
     + coalesce(pp.total, 0)
     + coalesce(tp.winner_points, 0)
     + coalesce(tp.golden_boot_points, 0)
+    + coalesce(tp.golden_ball_points, 0)
   )::int as points,
   coalesce(pr.exact_hits, 0)::int as exact_hits
 from public.group_members gm
@@ -267,7 +270,9 @@ left join lateral (
     case when g.point_cutoff is null or tpr.created_at >= g.point_cutoff
       then tpr.winner_points else 0 end as winner_points,
     case when g.point_cutoff is null or tpr.created_at >= g.point_cutoff
-      then tpr.golden_boot_points else 0 end as golden_boot_points
+      then tpr.golden_boot_points else 0 end as golden_boot_points,
+    case when g.point_cutoff is null or tpr.created_at >= g.point_cutoff
+      then tpr.golden_ball_points else 0 end as golden_ball_points
   from public.tournament_predictions tpr
   where tpr.user_id = gm.user_id
 ) tp on true;
@@ -445,8 +450,7 @@ create policy "player_predictions: update own before kickoff" on public.player_p
   for update to authenticated using (user_id = auth.uid())
   with check (exists (select 1 from matches m where m.id = match_id and m.kickoff > now()));
 
--- Lock cutoff is hardcoded to 2026-06-20 23:59:59 UTC (see stage6/stage6b migrations) —
--- not derived from match data, since the tournament is already underway by Stage 6.
+-- Lock cutoff is hardcoded to 2026-06-24 23:59:59 UTC (extended from June 20 in stage12).
 create policy "tournament_predictions: read own, or others after lock" on public.tournament_predictions
   for select to authenticated using (
     user_id = auth.uid()
@@ -455,16 +459,16 @@ create policy "tournament_predictions: read own, or others after lock" on public
         select 1 from group_members a join group_members b on a.group_id = b.group_id
         where a.user_id = auth.uid() and b.user_id = tournament_predictions.user_id
       )
-      and now() > '2026-06-20 23:59:59+00'
+      and now() > '2026-06-24 23:59:59+00'
     )
   );
 create policy "tournament_predictions: insert own before lock" on public.tournament_predictions
   for insert to authenticated with check (
-    user_id = auth.uid() and now() < '2026-06-20 23:59:59+00'
+    user_id = auth.uid() and now() < '2026-06-24 23:59:59+00'
   );
 create policy "tournament_predictions: update own before lock" on public.tournament_predictions
   for update to authenticated using (user_id = auth.uid())
-  with check (now() < '2026-06-20 23:59:59+00');
+  with check (now() < '2026-06-24 23:59:59+00');
 
 create policy "award_resolutions: read all (authed)" on public.tournament_award_resolutions
   for select to authenticated using (true);
@@ -746,9 +750,12 @@ $$;
 -- winner_points = 15 for every tournament_predictions row whose winner_team matches
 -- (case-insensitive, trimmed), 0 otherwise.
 --
--- Golden Boot: resolved via enter_golden_boot_winner (host-entry fallback — Football-
--- Data free tier has no reliable /scorers endpoint). Once resolved, recomputes
+-- Golden Boot: resolved via enter_golden_boot_winner (host-entry fallback). Recomputes
 -- golden_boot_points = 10 for every row whose golden_boot_player fuzzy-matches the
+-- entered name, 0 otherwise. Safe to re-run.
+--
+-- Golden Ball: resolved via enter_golden_ball_winner (host-entry fallback). Recomputes
+-- golden_ball_points = 5 for every row whose golden_ball_player fuzzy-matches the
 -- entered name, 0 otherwise. Safe to re-run.
 create or replace function public.resolve_tournament_awards()
 returns jsonb language plpgsql security definer set search_path = public as $$
@@ -758,6 +765,8 @@ declare
   v_winner_resolved boolean;
   v_golden_boot_value text;
   v_golden_boot_resolved boolean;
+  v_golden_ball_value text;
+  v_golden_ball_resolved boolean;
 begin
   select exists(select 1 from tournament_award_resolutions where award = 'tournament_winner') into v_winner_resolved;
 
@@ -800,7 +809,59 @@ begin
     end;
   end if;
 
-  return jsonb_build_object('winner_resolved', v_winner_resolved, 'golden_boot_resolved', v_golden_boot_resolved);
+  select winning_value into v_golden_ball_value from tournament_award_resolutions where award = 'golden_ball';
+  v_golden_ball_resolved := v_golden_ball_value is not null;
+
+  if v_golden_ball_resolved then
+    update tournament_predictions
+    set golden_ball_points = case
+      when golden_ball_player is not null and public.fuzzy_name_match(golden_ball_player, v_golden_ball_value) then 5
+      else 0
+    end;
+  end if;
+
+  return jsonb_build_object(
+    'winner_resolved', v_winner_resolved,
+    'golden_boot_resolved', v_golden_boot_resolved,
+    'golden_ball_resolved', v_golden_ball_resolved
+  );
+end; $$;
+
+-- enter_golden_ball_winner: security definer. Any authenticated user can submit once
+-- the FINAL has finished; first writer wins. Immediately recomputes golden_ball_points
+-- (+5) for everyone if this call is the one that resolved it.
+create or replace function public.enter_golden_ball_winner(p_player_name text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_name text;
+  v_rows int;
+  v_existing text;
+begin
+  v_name := trim(coalesce(p_player_name, ''));
+  if v_name = '' then
+    raise exception 'PLAYER_NAME_REQUIRED';
+  end if;
+
+  if not exists (select 1 from matches where stage = 'FINAL' and status = 'FINISHED') then
+    raise exception 'FINAL_NOT_FINISHED';
+  end if;
+
+  insert into tournament_award_resolutions (award, winning_value)
+  values ('golden_ball', v_name)
+  on conflict (award) do nothing;
+  get diagnostics v_rows = row_count;
+
+  select winning_value into v_existing from tournament_award_resolutions where award = 'golden_ball';
+
+  if v_rows > 0 then
+    update tournament_predictions
+    set golden_ball_points = case
+      when golden_ball_player is not null and public.fuzzy_name_match(golden_ball_player, v_existing) then 5
+      else 0
+    end;
+  end if;
+
+  return jsonb_build_object('winning_value', v_existing, 'newly_resolved', v_rows > 0);
 end; $$;
 
 -- enter_golden_boot_winner: security definer. Any authenticated user can submit once

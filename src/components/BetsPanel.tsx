@@ -10,13 +10,16 @@ import type { BoardRow } from "@/components/Leaderboard";
 export type TournamentPrediction = {
   winner_team: string | null;
   golden_boot_player: string | null;
+  golden_ball_player: string | null;
   winner_points: number | null;
   golden_boot_points: number | null;
+  golden_ball_points: number | null;
 } | null;
 
 export type TournamentResolutions = {
   tournamentWinner: string | null;
   goldenBootWinner: string | null;
+  goldenBallWinner: string | null;
 };
 
 const LIVE_STATUSES = new Set(["LIVE", "IN_PLAY", "PAUSED"]);
@@ -142,7 +145,7 @@ export function BetsPanel({
               href="/predictions"
               className="rounded-full border border-booking/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-booking"
             >
-              Edit before June 20
+              Edit before June 24
             </Link>
           )}
         </div>
@@ -152,7 +155,7 @@ export function BetsPanel({
             You haven&apos;t made tournament picks yet — make them now →
           </Link>
         ) : (
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
             <p className="text-sm">
               🏆 Winner: <span className="font-display uppercase tracking-wide">{tournamentPrediction.winner_team ?? "—"}</span>
               <AwardPointsBadge points={tournamentPrediction.winner_points} />
@@ -169,6 +172,16 @@ export function BetsPanel({
               {tournamentResolutions.goldenBootWinner && (
                 <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-chalk-dim">
                   Result: {tournamentResolutions.goldenBootWinner}
+                </span>
+              )}
+            </p>
+            <p className="text-sm">
+              🌟 Golden Ball:{" "}
+              <span className="font-display uppercase tracking-wide">{tournamentPrediction.golden_ball_player ?? "—"}</span>
+              <AwardPointsBadge points={tournamentPrediction.golden_ball_points} />
+              {tournamentResolutions.goldenBallWinner && (
+                <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-chalk-dim">
+                  Result: {tournamentResolutions.goldenBallWinner}
                 </span>
               )}
             </p>
@@ -270,9 +283,9 @@ export function BetsPanel({
             Position: <span className="text-chalk">{ordinal(leaderboardPosition)} of {board.length}</span>
           </p>
         )}
-        {tournamentPrediction && (tournamentPrediction.winner_points !== null || tournamentPrediction.golden_boot_points !== null) && (
+        {tournamentPrediction && (tournamentPrediction.winner_points !== null || tournamentPrediction.golden_boot_points !== null || tournamentPrediction.golden_ball_points !== null) && (
           <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">
-            Tournament awards: {tournamentPrediction.winner_points ?? 0} + {tournamentPrediction.golden_boot_points ?? 0} pts
+            Tournament awards: {tournamentPrediction.winner_points ?? 0} + {tournamentPrediction.golden_boot_points ?? 0} + {tournamentPrediction.golden_ball_points ?? 0} pts
           </p>
         )}
       </div>

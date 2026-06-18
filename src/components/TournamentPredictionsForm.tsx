@@ -8,8 +8,10 @@ import { TOURNAMENT_PREDICTIONS_LOCK } from "@/lib/tournament";
 type Initial = {
   winner_team: string | null;
   golden_boot_player: string | null;
+  golden_ball_player: string | null;
   winner_points: number | null;
   golden_boot_points: number | null;
+  golden_ball_points: number | null;
 } | null;
 
 function PointsBadge({ points }: { points: number | null }) {
@@ -27,6 +29,7 @@ export function TournamentPredictionsForm({
   finalFinished,
   tournamentWinner,
   goldenBootWinner,
+  goldenBallWinner,
   backHref,
   backLabel,
 }: {
@@ -35,6 +38,7 @@ export function TournamentPredictionsForm({
   finalFinished: boolean;
   tournamentWinner: string | null;
   goldenBootWinner: string | null;
+  goldenBallWinner: string | null;
   backHref: string;
   backLabel: string;
 }) {
@@ -42,6 +46,7 @@ export function TournamentPredictionsForm({
 
   const [winnerTeam, setWinnerTeam] = useState(initial?.winner_team ?? "");
   const [goldenBoot, setGoldenBoot] = useState(initial?.golden_boot_player ?? "");
+  const [goldenBall, setGoldenBall] = useState(initial?.golden_ball_player ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +56,15 @@ export function TournamentPredictionsForm({
   const [gbError, setGbError] = useState<string | null>(null);
   const [gbResolved, setGbResolved] = useState(goldenBootWinner);
 
+  const [gb2Entry, setGb2Entry] = useState("");
+  const [gb2Saving, setGb2Saving] = useState(false);
+  const [gb2Error, setGb2Error] = useState<string | null>(null);
+  const [gb2Resolved, setGb2Resolved] = useState(goldenBallWinner);
+
   async function save() {
     setError(null);
-    if (!winnerTeam.trim() || !goldenBoot.trim()) {
-      return setError("Fill in both picks.");
+    if (!winnerTeam.trim() || !goldenBoot.trim() || !goldenBall.trim()) {
+      return setError("Fill in all three picks.");
     }
     setSaving(true);
     const supabase = createClient();
@@ -71,6 +81,7 @@ export function TournamentPredictionsForm({
           user_id: auth.user.id,
           winner_team: winnerTeam.trim(),
           golden_boot_player: goldenBoot.trim(),
+          golden_ball_player: goldenBall.trim(),
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id" }
@@ -102,6 +113,24 @@ export function TournamentPredictionsForm({
     setGbResolved(json.winningValue ?? gbEntry.trim());
   }
 
+  async function submitGoldenBall() {
+    setGb2Error(null);
+    if (!gb2Entry.trim()) return setGb2Error("Enter a player name.");
+    setGb2Saving(true);
+    const res = await fetch("/api/tournament/golden-ball", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerName: gb2Entry.trim() }),
+    });
+    const json = await res.json();
+    setGb2Saving(false);
+    if (!res.ok) {
+      setGb2Error(json.error ?? "Something went wrong.");
+      return;
+    }
+    setGb2Resolved(json.winningValue ?? gb2Entry.trim());
+  }
+
   return (
     <main className="mx-auto max-w-md px-4 py-8">
       <Link href={backHref} className="text-xs uppercase tracking-wide text-chalk-dim">
@@ -111,7 +140,7 @@ export function TournamentPredictionsForm({
       <p className="mt-4 eyebrow">World Cup 2026</p>
       <h1 className="mt-1 font-display text-4xl uppercase">Tournament picks</h1>
       <p className="mt-2 text-sm text-chalk-dim">
-        One set of picks across every group. Locks June 20.
+        One set of picks across every group. Locks June 24.
       </p>
 
       {locked ? (
@@ -124,6 +153,10 @@ export function TournamentPredictionsForm({
           <p className="mt-1 text-sm">
             Golden Boot: <span className="font-semibold">{initial?.golden_boot_player ?? "—"}</span>
             <PointsBadge points={initial?.golden_boot_points ?? null} />
+          </p>
+          <p className="mt-1 text-sm">
+            Golden Ball: <span className="font-semibold">{initial?.golden_ball_player ?? "—"}</span>
+            <PointsBadge points={initial?.golden_ball_points ?? null} />
           </p>
         </div>
       ) : (
@@ -147,6 +180,14 @@ export function TournamentPredictionsForm({
             className="input mt-2"
             value={goldenBoot}
             onChange={(e) => setGoldenBoot(e.target.value)}
+            placeholder="Player name"
+          />
+
+          <label className="mt-5 block text-sm text-chalk-dim">Golden Ball — best player?</label>
+          <input
+            className="input mt-2"
+            value={goldenBall}
+            onChange={(e) => setGoldenBall(e.target.value)}
             placeholder="Player name"
           />
           <p className="mt-1 text-xs text-chalk-dim">
@@ -191,6 +232,30 @@ export function TournamentPredictionsForm({
             </>
           ) : (
             <p className="mt-1 text-sm">⚽ Golden Boot: <span className="font-semibold">TBD</span></p>
+          )}
+
+          {gb2Resolved ? (
+            <p className="mt-1 text-sm">
+              🌟 Golden Ball: <span className="font-semibold">{gb2Resolved}</span>
+            </p>
+          ) : finalFinished ? (
+            <>
+              <p className="mt-3 text-xs text-chalk-dim">
+                Enter the official Golden Ball winner (best player of the tournament) to lock it in for everyone.
+              </p>
+              <input
+                className="input mt-3"
+                value={gb2Entry}
+                onChange={(e) => setGb2Entry(e.target.value)}
+                placeholder="e.g. Kylian Mbappe"
+              />
+              {gb2Error && <p className="mt-2 text-sm text-sendoff">{gb2Error}</p>}
+              <button onClick={submitGoldenBall} disabled={gb2Saving} className="btn-primary mt-3 w-full disabled:opacity-50">
+                {gb2Saving ? "Saving…" : "Submit"}
+              </button>
+            </>
+          ) : (
+            <p className="mt-1 text-sm">🌟 Golden Ball: <span className="font-semibold">TBD</span></p>
           )}
         </div>
       )}
