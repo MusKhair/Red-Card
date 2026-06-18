@@ -3,6 +3,8 @@ import { Oswald, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { TermsModal } from "@/components/TermsModal";
+import { InstallPrompt } from "@/components/InstallPrompt";
+import { IOSInstallHint } from "@/components/IOSInstallHint";
 import { createClient } from "@/lib/supabase/server";
 
 const display = Oswald({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-display" });
@@ -12,6 +14,16 @@ const mono = JetBrains_Mono({ weight: ["400", "500", "700"], subsets: ["latin"],
 export const metadata: Metadata = {
   title: "RedCard — World Cup forfeit sweepstakes",
   description: "Predict matches with your group. Bottom of the table does the forfeit.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Red Card",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -37,6 +49,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-dvh">
         <GlobalHeader isSignedIn={!!auth.user} />
         <TermsModal show={needsTermsAcceptance} />
+        <InstallPrompt />
+        <IOSInstallHint />
         {children}
       </body>
     </html>

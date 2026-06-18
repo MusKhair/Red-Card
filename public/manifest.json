@@ -1,0 +1,15 @@
+{
+  "name": "Red Card",
+  "short_name": "Red Card",
+  "description": "World Cup forfeit sweepstakes for your group chat",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0C0A",
+  "theme_color": "#0A0C0A",
+  "icons": [
+    { "src": "/icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
+    { "src": "/icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "maskable" }
+  ]
+}
