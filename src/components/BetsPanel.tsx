@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { STAGE_LABEL } from "@/lib/stages";
 import { TOURNAMENT_PREDICTIONS_LOCK } from "@/lib/tournament";
@@ -17,6 +18,8 @@ export type TournamentResolutions = {
   tournamentWinner: string | null;
   goldenBootWinner: string | null;
 };
+
+const LIVE_STATUSES = new Set(["LIVE", "IN_PLAY", "PAUSED"]);
 
 function ordinal(n: number): string {
   const j = n % 10;
@@ -98,28 +101,30 @@ export function BetsPanel({
   board: BoardRow[];
   leaderboardPosition: number | null;
 }) {
+  const [matchSubTab, setMatchSubTab] = useState<"upcoming" | "past">("upcoming");
+
   const locked = Date.now() > new Date(TOURNAMENT_PREDICTIONS_LOCK).getTime();
   const now = Date.now();
 
   const matchesById = new Map(matches.map((m) => [m.id, m]));
-  const rows = myPredictions
+  const allRows = myPredictions
     .map((p) => ({ prediction: p, match: matchesById.get(p.match_id) }))
     .filter((r): r is { prediction: MyPrediction; match: Match } => !!r.match);
 
-  // 0 = live (kicked off, not yet finished), 1 = upcoming, 2 = finished.
-  const bucketOf = (m: Match): 0 | 1 | 2 => {
-    if (m.status === "FINISHED") return 2;
-    return new Date(m.kickoff).getTime() > now ? 1 : 0;
-  };
+  const upcomingRows = allRows
+    .filter(({ match }) => match.status !== "FINISHED")
+    .sort((a, b) => {
+      const aLive = LIVE_STATUSES.has(a.match.status) ? 0 : 1;
+      const bLive = LIVE_STATUSES.has(b.match.status) ? 0 : 1;
+      if (aLive !== bLive) return aLive - bLive;
+      return new Date(a.match.kickoff).getTime() - new Date(b.match.kickoff).getTime();
+    });
 
-  rows.sort((a, b) => {
-    const ba = bucketOf(a.match);
-    const bb = bucketOf(b.match);
-    if (ba !== bb) return ba - bb;
-    const ka = new Date(a.match.kickoff).getTime();
-    const kb = new Date(b.match.kickoff).getTime();
-    return ba === 2 ? kb - ka : ka - kb;
-  });
+  const pastRows = allRows
+    .filter(({ match }) => match.status === "FINISHED")
+    .sort((a, b) => new Date(b.match.kickoff).getTime() - new Date(a.match.kickoff).getTime());
+
+  const visibleRows = matchSubTab === "upcoming" ? upcomingRows : pastRows;
 
   const myRow = board.find((r) => r.user_id === currentUserId);
 
@@ -172,14 +177,39 @@ export function BetsPanel({
       </div>
 
       <div className="card md:col-span-2">
-        <p className="font-display text-2xl font-bold uppercase tracking-wide">Match predictions</p>
-        {rows.length === 0 ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-display text-2xl font-bold uppercase tracking-wide">Match predictions</p>
+          {allRows.length > 0 && (
+            <div className="flex gap-1">
+              {(["upcoming", "past"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setMatchSubTab(t)}
+                  className={`rounded-lg border px-3 py-1.5 font-display text-xs uppercase tracking-wide transition ${
+                    matchSubTab === t
+                      ? "border-booking bg-booking text-pitch-950"
+                      : "border-pitch-700 text-chalk-dim"
+                  }`}
+                >
+                  {t === "upcoming" ? `Upcoming · ${upcomingRows.length}` : `Past · ${pastRows.length}`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {allRows.length === 0 ? (
           <p className="mt-3 text-sm text-chalk-dim">
             You haven&apos;t predicted any matches yet — head to Fixtures to make some.
           </p>
+        ) : visibleRows.length === 0 ? (
+          <p className="mt-3 text-sm text-chalk-dim">
+            {matchSubTab === "upcoming" ? "No upcoming matches you've predicted." : "No finished matches yet."}
+          </p>
         ) : (
           <div className="mt-3 flex flex-col gap-2">
-            {rows.map(({ prediction, match }) => {
+            {visibleRows.map(({ prediction, match }) => {
+              const live = LIVE_STATUSES.has(match.status);
               const kickoffLocal = new Date(match.kickoff).toLocaleString(undefined, {
                 weekday: "short",
                 day: "numeric",
@@ -205,7 +235,10 @@ export function BetsPanel({
                     <p className="truncate font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">
                       {STAGE_LABEL[match.stage] ?? match.stage} · {kickoffLocal}
                     </p>
-                    <p className="truncate font-display uppercase tracking-wide">
+                    <p className="flex items-center truncate font-display uppercase tracking-wide">
+                      {live && (
+                        <span className="mr-1.5 inline-block h-2 w-2 shrink-0 animate-pulse rounded-full bg-sendoff" />
+                      )}
                       {match.home_team} vs {match.away_team}
                     </p>
                     <p className="mt-0.5 text-xs text-chalk-dim">

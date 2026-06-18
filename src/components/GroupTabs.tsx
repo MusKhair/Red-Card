@@ -60,6 +60,9 @@ export function GroupTabs({
   maxTier: number;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("fixtures");
+  const [fixturesSubTab, setFixturesSubTab] = useState<"upcoming" | "past">("upcoming");
+
+  const LIVE_STATUSES = new Set(["LIVE", "IN_PLAY", "PAUSED"]);
 
   const predsByMatch = useMemo(() => {
     const map = new Map<number, MyPrediction>();
@@ -78,8 +81,15 @@ export function GroupTabs({
     return map;
   }, [groupPredictions, currentUserId]);
 
-  const upcoming = matches.filter((m) => m.status !== "FINISHED");
-  const finished = matches.filter((m) => m.status === "FINISHED").reverse();
+  const upcomingMatches = matches
+    .filter((m) => m.status !== "FINISHED")
+    .sort((a, b) => {
+      const aLive = LIVE_STATUSES.has(a.status) ? 0 : 1;
+      const bLive = LIVE_STATUSES.has(b.status) ? 0 : 1;
+      if (aLive !== bLive) return aLive - bLive;
+      return new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime();
+    });
+  const finishedMatches = matches.filter((m) => m.status === "FINISHED").reverse();
 
   return (
     <main className="min-h-dvh">
@@ -134,34 +144,78 @@ export function GroupTabs({
       {tab === "fixtures" && (
         <div className="bg-pitch-field px-4 py-5 md:px-8 md:py-8">
           <div className="mx-auto max-w-5xl">
-            {matches.length === 0 && (
+            {matches.length === 0 ? (
               <div className="card text-center text-sm text-chalk-dim">
                 No fixtures yet. Hit <code className="text-chalk">/api/sync</code> (with your CRON_SECRET) once to pull them in.
               </div>
+            ) : (
+              <>
+                <div className="mb-4 flex gap-1">
+                  {(["upcoming", "past"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setFixturesSubTab(t)}
+                      className={`rounded-lg border px-3 py-1.5 font-display text-xs uppercase tracking-wide transition ${
+                        fixturesSubTab === t
+                          ? "border-booking bg-booking text-pitch-950"
+                          : "border-pitch-700 text-chalk-dim"
+                      }`}
+                    >
+                      {t === "upcoming"
+                        ? `Upcoming · ${upcomingMatches.length}`
+                        : `Past · ${finishedMatches.length}`}
+                    </button>
+                  ))}
+                </div>
+
+                {fixturesSubTab === "upcoming" && (
+                  <>
+                    {upcomingMatches.length === 0 ? (
+                      <div className="card text-center text-sm text-chalk-dim">No upcoming matches.</div>
+                    ) : (
+                      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+                        {upcomingMatches.map((m) => (
+                          <div key={m.id} className="flex flex-col gap-1.5">
+                            {LIVE_STATUSES.has(m.status) && (
+                              <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-sendoff">
+                                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-sendoff" />
+                                Live now
+                              </p>
+                            )}
+                            <MatchCard
+                              match={m}
+                              stageLabel={STAGE_LABEL[m.stage] ?? m.stage}
+                              myPrediction={predsByMatch.get(m.id)}
+                              otherPredictions={otherPredsByMatch.get(m.id) ?? []}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {fixturesSubTab === "past" && (
+                  <>
+                    {finishedMatches.length === 0 ? (
+                      <div className="card text-center text-sm text-chalk-dim">No past matches yet.</div>
+                    ) : (
+                      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+                        {finishedMatches.map((m) => (
+                          <MatchCard
+                            key={m.id}
+                            match={m}
+                            stageLabel={STAGE_LABEL[m.stage] ?? m.stage}
+                            myPrediction={predsByMatch.get(m.id)}
+                            otherPredictions={otherPredsByMatch.get(m.id) ?? []}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
             )}
-            <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-              {upcoming.map((m) => (
-                <MatchCard
-                  key={m.id}
-                  match={m}
-                  stageLabel={STAGE_LABEL[m.stage] ?? m.stage}
-                  myPrediction={predsByMatch.get(m.id)}
-                  otherPredictions={otherPredsByMatch.get(m.id) ?? []}
-                />
-              ))}
-            </div>
-            {finished.length > 0 && <p className="eyebrow mb-3 mt-6">Finished</p>}
-            <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-              {finished.map((m) => (
-                <MatchCard
-                  key={m.id}
-                  match={m}
-                  stageLabel={STAGE_LABEL[m.stage] ?? m.stage}
-                  myPrediction={predsByMatch.get(m.id)}
-                  otherPredictions={otherPredsByMatch.get(m.id) ?? []}
-                />
-              ))}
-            </div>
           </div>
         </div>
       )}
