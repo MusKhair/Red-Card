@@ -8,12 +8,12 @@ type GroupPreview = { id: string; name: string; max_tier: number; host_name: str
 
 const TIER_SUMMARY: Record<number, { name: string; color: string; examples: string[] }> = {
   1: {
-    name: "Mild",
+    name: "Friendly",
     color: "text-grass",
     examples: ["Wear the rival's jersey for a day", "Buy the group breakfast", "Winner picks your nickname for 2 weeks"],
   },
   2: {
-    name: "Spicy",
+    name: "Challenging",
     color: "text-booking",
     examples: ["100 pushups on video, no cuts", "Cringe TikTok on your real account for 48h", "3-minute cold shower, timer in frame"],
   },

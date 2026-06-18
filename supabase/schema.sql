@@ -135,7 +135,7 @@ create table public.forfeit_vote_sessions (
   stage text not null,
   is_boss boolean not null default false,
   status text not null default 'open' check (status in ('open','closed','voided')),
-  opened_by uuid not null references public.profiles(id),
+  opened_by uuid references public.profiles(id),  -- null = auto-opened by cron
   opened_at timestamptz not null default now(),
   closes_at timestamptz not null default (now() + interval '24 hours'),
   closed_at timestamptz,

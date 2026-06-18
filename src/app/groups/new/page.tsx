@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const TIERS = [
-  { tier: 1, name: "Mild", blurb: "Rival jerseys, breakfast tax, nickname clause. Family / office safe." },
-  { tier: 2, name: "Spicy", blurb: "100 pushups, cringe TikToks, cold showers. Group-chat legend material." },
+  { tier: 1, name: "Friendly", blurb: "Rival jerseys, breakfast tax, nickname clause. Family / office safe." },
+  { tier: 2, name: "Challenging", blurb: "100 pushups, cringe TikToks, cold showers. Group-chat legend material." },
   { tier: 3, name: "Extreme", blurb: "Buzz cuts, ice baths, eyebrow slits. Every member must opt in. 18+ only." },
 ];
 
@@ -51,7 +51,7 @@ export default function NewGroupPage() {
     if (jErr) {
       setError(
         jErr.message.includes("UNDER_18")
-          ? "You're under 18 — you can only host Mild (Tier 1) groups."
+          ? "You're under 18 — you can only host Friendly (Tier 1) groups."
           : jErr.message.includes("DOB_REQUIRED")
             ? "Finish onboarding first (date of birth missing)."
             : jErr.message

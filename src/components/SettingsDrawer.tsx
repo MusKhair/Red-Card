@@ -168,7 +168,7 @@ export function SettingsDrawer({
                 <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Who gets the red card</h3>
                 <p className="mt-1">
                   At the end of each stage (Group, R32, R16, QF, SF, Final), whoever&apos;s at the bottom of the
-                  leaderboard gets a forfeit. Group stage = mild, knockouts = spicy, Semi/Final = extreme.
+                  leaderboard gets a forfeit. Group stage = friendly, knockouts = challenging, Semi/Final = extreme.
                 </p>
                 <p className="mt-2">
                   The Final loser gets the <strong className="text-chalk">BOSS FORFEIT</strong> — the worst one.

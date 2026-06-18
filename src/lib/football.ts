@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { scorePrediction } from "@/lib/scoring";
+import { VOTE_STAGES } from "@/lib/stages";
 
 const API = "https://api.football-data.org/v4/competitions/WC/matches";
 
@@ -93,6 +94,59 @@ export async function syncMatchesAndScore(): Promise<{ synced: boolean; reason?:
     .eq("status", "open")
     .lte("closes_at", new Date().toISOString());
   for (const s of expired ?? []) await admin.rpc("close_forfeit_vote_session", { p_session_id: s.id });
+
+  // Auto-open forfeit votes for stages that ended 2h+ ago with no vote yet.
+  // Runs for every group × ready stage. auth.uid() is NULL here (service-role client),
+  // so opened_by stores NULL — meaning "auto-opened by the cron".
+  {
+    const { data: allMatches } = await admin.from("matches").select("stage, status, kickoff");
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+
+    const readyStages = VOTE_STAGES.map((s) => s.key).filter((stageKey) => {
+      const sm = (allMatches ?? []).filter((m) => m.stage === stageKey);
+      if (!sm.length || !sm.every((m) => m.status === "FINISHED")) return false;
+      const lastKickoff = Math.max(...sm.map((m) => new Date(m.kickoff).getTime()));
+      return Date.now() - lastKickoff >= TWO_HOURS_MS;
+    });
+
+    if (readyStages.length) {
+      const { data: groups } = await admin.from("groups").select("id");
+
+      for (const group of groups ?? []) {
+        for (const stageKey of readyStages) {
+          const { data: existing } = await admin
+            .from("forfeit_vote_sessions")
+            .select("id")
+            .eq("group_id", group.id)
+            .eq("stage", stageKey)
+            .limit(1);
+          if (existing?.length) continue;
+
+          const { data: board } = await admin
+            .from("group_leaderboard")
+            .select("user_id, points, exact_hits")
+            .eq("group_id", group.id)
+            .order("points", { ascending: true })
+            .order("exact_hits", { ascending: true });
+          if (!board || board.length < 2) continue;
+
+          const bottomPoints = board[0].points;
+          const bottomExact = board[0].exact_hits;
+          const tied = board.filter((r) => r.points === bottomPoints && r.exact_hits === bottomExact);
+          const loser = tied[Math.floor(Math.random() * tied.length)];
+
+          // Errors (VOTE_ALREADY_OPEN, INSUFFICIENT_POOL, etc.) are silently skipped —
+          // the unique index on (group_id) where status='open' is the hard guard.
+          await admin.rpc("open_forfeit_vote", {
+            p_group_id: group.id,
+            p_loser_id: loser.user_id,
+            p_stage: stageKey,
+            p_is_boss: stageKey === "FINAL",
+          });
+        }
+      }
+    }
+  }
 
   // Resolve tournament-long awards (Winner auto from the FINAL match's winner field;
   // Golden Boot via host-entry — see enter_golden_boot_winner). Idempotent no-op if

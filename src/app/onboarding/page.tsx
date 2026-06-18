@@ -15,7 +15,7 @@ function OnboardingInner() {
 
   async function save() {
     setError(null);
-    if (!dob) return setError("Date of birth is required — it caps under-18s at mild forfeits.");
+    if (!dob) return setError("Date of birth is required — it caps under-18s at friendly forfeits.");
     const dobDate = new Date(dob);
     if (dobDate > new Date()) return setError("That date is in the future.");
     setSaving(true);
@@ -47,7 +47,7 @@ function OnboardingInner() {
       <label className="mt-5 block text-sm text-chalk-dim">Date of birth</label>
       <input className="input mt-2" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
       <p className="mt-2 text-xs text-chalk-dim">
-        Under-18s can only join groups with mild (Tier 1) forfeits.
+        Under-18s can only join groups with friendly (Tier 1) forfeits.
       </p>
 
       {error && <p className="mt-4 text-sm text-sendoff">{error}</p>}

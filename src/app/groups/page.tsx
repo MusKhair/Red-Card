@@ -16,7 +16,7 @@ export default async function GroupsPage() {
     .map((m) => m.groups as unknown as { id: string; name: string; max_tier: number; invite_code: string } | null)
     .filter((g): g is { id: string; name: string; max_tier: number; invite_code: string } => g !== null);
 
-  const tierLabel = ["", "Mild", "Spicy", "Extreme"];
+  const tierLabel = ["", "Friendly", "Challenging", "Extreme"];
 
   return (
     <main className="mx-auto max-w-md px-6 py-10">

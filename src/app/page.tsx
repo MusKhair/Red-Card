@@ -94,7 +94,7 @@ export default async function Landing() {
             </Link>
           )}
           <p className="text-center font-mono text-[11px] leading-relaxed text-chalk-dim/70 md:hidden">
-            Sweepstakes go mild → spicy → extreme.
+            Sweepstakes go friendly → challenging → extreme.
             <br />
             Group host picks the limit.
           </p>
