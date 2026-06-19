@@ -42,14 +42,16 @@ export default async function Landing() {
 
         {/* visual block: referee illustration + sample red card */}
         <div className="relative flex flex-col gap-5 md:h-[420px] md:gap-0 [perspective:1200px]">
-          <Image
-            src="/ref.png"
-            alt=""
-            width={400}
-            height={600}
-            priority
-            className="mx-auto h-52 w-auto md:absolute md:left-[-10px] md:top-12 md:h-[330px] md:w-auto"
-          />
+          <div className="animate-ref-breathe md:absolute md:left-[-10px] md:top-12">
+            <Image
+              src="/ref.png"
+              alt=""
+              width={400}
+              height={600}
+              priority
+              className="mx-auto h-52 w-auto md:h-[330px] md:w-auto"
+            />
+          </div>
 
           <div className="animate-cardflip rounded-[18px] bg-gradient-to-b from-sendoff to-sendoff-deep p-[17px] shadow-[0_24px_44px_-20px_rgba(229,56,59,0.75)] md:ml-auto md:w-[330px] md:rounded-[22px] md:p-[22px] md:shadow-[0_40px_70px_-26px_rgba(229,56,59,0.7)]">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-pitch-950/60 md:text-[10.5px]">

@@ -43,3 +43,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-cardflip, .animate-risefade { animation: none !important; }
 }
+
+@keyframes ref-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-ref-breathe {
+    animation: ref-breathe 3s ease-in-out infinite;
+    transform-origin: center;
+  }
+}
