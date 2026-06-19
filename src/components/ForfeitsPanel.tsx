@@ -183,6 +183,15 @@ export function ForfeitsPanel({
 
       {error && <p className="text-sm text-sendoff">{error}</p>}
 
+      {forfeits.length === 0 && customForfeits.length === 0 && !openVoteSessionId && (
+        <div className="card py-6 text-center">
+          <p className="eyebrow">No verdicts yet</p>
+          <p className="mt-2 text-sm text-chalk-dim">
+            When a stage ends, the bottom of the table gets the sentence.
+          </p>
+        </div>
+      )}
+
       <div className="card">
         {!showPropose ? (
           <button onClick={() => setShowPropose(true)} className="btn-ghost w-full">
@@ -338,12 +347,6 @@ export function ForfeitsPanel({
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {forfeits.length === 0 && (
-        <div className="card text-center text-sm text-chalk-dim">
-          No forfeits yet. The table decides who suffers first.
         </div>
       )}
 

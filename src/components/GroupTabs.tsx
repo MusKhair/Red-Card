@@ -222,7 +222,7 @@ export function GroupTabs({
 
       {tab === "table" && (
         <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-8">
-          <Leaderboard board={board} currentUserId={currentUserId} />
+          <Leaderboard board={board} currentUserId={currentUserId} groupCode={group.invite_code} />
         </div>
       )}
 
@@ -236,6 +236,7 @@ export function GroupTabs({
             tournamentResolutions={tournamentResolutions}
             board={board}
             leaderboardPosition={leaderboardPosition}
+            onGoToFixtures={() => setTab("fixtures")}
           />
         </div>
       )}

@@ -95,6 +95,7 @@ export function BetsPanel({
   tournamentResolutions,
   board,
   leaderboardPosition,
+  onGoToFixtures,
 }: {
   currentUserId: string;
   matches: Match[];
@@ -103,6 +104,7 @@ export function BetsPanel({
   tournamentResolutions: TournamentResolutions;
   board: BoardRow[];
   leaderboardPosition: number | null;
+  onGoToFixtures?: () => void;
 }) {
   const [matchSubTab, setMatchSubTab] = useState<"upcoming" | "past">("upcoming");
 
@@ -212,9 +214,15 @@ export function BetsPanel({
         </div>
 
         {allRows.length === 0 ? (
-          <p className="mt-3 text-sm text-chalk-dim">
-            You haven&apos;t predicted any matches yet — head to Fixtures to make some.
-          </p>
+          <div className="mt-4 flex flex-col items-center gap-2 py-4 text-center">
+            <p className="eyebrow">No predictions yet</p>
+            <p className="text-sm text-chalk-dim">Tap a fixture to make your first pick.</p>
+            {onGoToFixtures && (
+              <button onClick={onGoToFixtures} className="mt-2 text-sm font-semibold text-booking">
+                Go to Fixtures →
+              </button>
+            )}
+          </div>
         ) : visibleRows.length === 0 ? (
           <p className="mt-3 text-sm text-chalk-dim">
             {matchSubTab === "upcoming" ? "No upcoming matches you've predicted." : "No finished matches yet."}

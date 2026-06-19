@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 export type BoardRow = {
   group_id: string;
   user_id: string;
@@ -9,9 +11,54 @@ export type BoardRow = {
   exact_hits: number;
 };
 
-export function Leaderboard({ board, currentUserId }: { board: BoardRow[]; currentUserId: string }) {
+export function Leaderboard({
+  board,
+  currentUserId,
+  groupCode,
+}: {
+  board: BoardRow[];
+  currentUserId: string;
+  groupCode?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState(groupCode ? `/join/${groupCode}` : "");
+
+  useEffect(() => {
+    if (groupCode) setInviteUrl(`${window.location.origin}/join/${groupCode}`);
+  }, [groupCode]);
+
   if (!board.length) {
     return <div className="card text-center text-sm text-chalk-dim">Nobody here yet. Share the invite.</div>;
+  }
+
+  if (board.length === 1 && board[0].user_id === currentUserId && groupCode) {
+    function copy() {
+      navigator.clipboard.writeText(inviteUrl).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+    return (
+      <div className="flex flex-col gap-4">
+        <div>
+          <p className="eyebrow">Your table is empty</p>
+          <h2 className="mt-1 font-display text-4xl font-bold uppercase leading-none md:text-5xl">Invite your squad</h2>
+        </div>
+        <div className="card">
+          <p className="text-sm text-chalk-dim">Invite your friends to start the sweepstakes.</p>
+          <button onClick={copy} className="btn-primary mt-4 w-full">
+            {copied ? "Copied ✓" : "Copy invite link"}
+          </button>
+          <div className="mt-4">
+            <p className="text-xs text-chalk-dim">Share manually:</p>
+            <p className="mt-1 break-all font-mono text-xs text-chalk">{inviteUrl}</p>
+          </div>
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-chalk-dim">
+            Currently in: 1 player (just you)
+          </p>
+        </div>
+      </div>
+    );
   }
   const last = board.length - 1;
 
