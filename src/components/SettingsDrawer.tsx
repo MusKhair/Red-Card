@@ -33,9 +33,26 @@ export function SettingsDrawer({
   const [reloadToken, setReloadToken] = useState(0);
   const [view, setView] = useState<"menu" | "terms">("menu");
 
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+
   useEffect(() => {
-    if (!open) setView("menu");
+    if (!open) {
+      setView("menu");
+      setEditing(false);
+      setNameError(null);
+    }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !isSignedIn) return;
+    fetch("/api/profile/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => { if (json) setDisplayName(json.displayName); });
+  }, [open, isSignedIn]);
 
   useEffect(() => {
     if (!open || !groupId) {
@@ -65,6 +82,25 @@ export function SettingsDrawer({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  async function saveName() {
+    setNameError(null);
+    const trimmed = nameInput.trim();
+    if (!trimmed) return setNameError("Name can't be empty.");
+    if (trimmed.length > 30) return setNameError("Name must be 30 characters or less.");
+    setNameSaving(true);
+    const res = await fetch("/api/profile/display-name", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ displayName: trimmed }),
+    });
+    const json = await res.json();
+    setNameSaving(false);
+    if (!res.ok) { setNameError(json.error ?? "Something went wrong."); return; }
+    setDisplayName(json.displayName);
+    setEditing(false);
+    router.refresh();
+  }
 
   async function signOut() {
     const supabase = createClient();
@@ -111,6 +147,52 @@ export function SettingsDrawer({
             </div>
           ) : (
             <>
+          {isSignedIn && (
+            <section className="mb-6">
+              <p className="eyebrow">Your profile</p>
+              <div className="mt-3">
+                {editing ? (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      className="input"
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      maxLength={30}
+                      placeholder="Display name"
+                      autoFocus
+                    />
+                    {nameError && <p className="text-xs text-sendoff">{nameError}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveName}
+                        disabled={nameSaving}
+                        className="btn-primary flex-1 py-1.5 text-sm disabled:opacity-50"
+                      >
+                        {nameSaving ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        onClick={() => { setEditing(false); setNameError(null); }}
+                        className="btn-ghost flex-1 py-1.5 text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-chalk">{displayName ?? "—"}</p>
+                    <button
+                      onClick={() => { setNameInput(displayName ?? ""); setEditing(true); }}
+                      className="text-xs uppercase tracking-wide text-booking"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
           {groupId && (
             <section className="mb-6">
               <p className="eyebrow">This group</p>
