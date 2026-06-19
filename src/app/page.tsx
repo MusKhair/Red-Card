@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { InstallInstructions } from "@/components/InstallInstructions";
 
 export default async function Landing() {
   const supabase = await createClient();
@@ -98,6 +99,7 @@ export default async function Landing() {
             <br />
             Group host picks the limit.
           </p>
+          {!isSignedIn && <InstallInstructions />}
         </div>
       </div>
     </main>
