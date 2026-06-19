@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
@@ -101,6 +102,7 @@ export function MatchCard({
   myPrediction?: MyPrediction;
   otherPredictions?: GroupPrediction[];
 }) {
+  const router = useRouter();
   const msLeft = useCountdown(match.kickoff);
   const locked = msLeft <= 0;
   const live = match.status === "IN_PLAY" || match.status === "PAUSED";
@@ -148,6 +150,7 @@ export function MatchCard({
       return;
     }
     setPred({ match_id: match.id, pred_home: h, pred_away: a, points: null });
+    router.refresh();
   }
 
   const kickoffLocal = new Date(match.kickoff).toLocaleString(undefined, {
