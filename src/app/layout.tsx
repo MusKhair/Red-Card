@@ -5,6 +5,7 @@ import { GlobalHeader } from "@/components/GlobalHeader";
 import { TermsModal } from "@/components/TermsModal";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { IOSInstallHint } from "@/components/IOSInstallHint";
+import { Analytics } from "@vercel/analytics/react";
 import { createClient } from "@/lib/supabase/server";
 
 const display = Oswald({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-display" });
@@ -52,6 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <InstallPrompt />
         <IOSInstallHint />
         {children}
+        <Analytics />
       </body>
     </html>
   );
