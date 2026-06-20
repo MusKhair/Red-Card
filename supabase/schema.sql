@@ -8,7 +8,9 @@ create table public.profiles (
   dob date,
   created_at timestamptz not null default now(),
   -- Stage 9: null until the user accepts the Terms & Conditions modal.
-  terms_accepted_at timestamptz default null
+  terms_accepted_at timestamptz default null,
+  -- Stage 13: null until the user dismisses the one-time welcome card.
+  tutorial_dismissed_at timestamptz default null
 );
 
 create or replace function public.handle_new_user()

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GroupTabs } from "@/components/GroupTabs";
+import { WelcomeCard } from "@/components/WelcomeCard";
 import type { GroupPrediction } from "@/components/MatchCard";
 import type { CustomForfeitRow } from "@/components/ForfeitsPanel";
 import { VOTE_STAGES } from "@/lib/stages";
@@ -54,6 +55,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     { data: awardResolutions },
     { data: groupMembers },
     { data: customForfeitsRaw },
+    { data: profile },
   ] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff", { ascending: true }),
     supabase
@@ -86,6 +88,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       .eq("group_id", id)
       .in("status", ["pending_approval", "approved"])
       .order("created_at", { ascending: true }),
+    supabase.from("profiles").select("tutorial_dismissed_at").eq("id", auth.user.id).single(),
   ]);
 
   const memberRows = (groupMembers ?? []) as unknown as {
@@ -165,8 +168,14 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     return Date.now() - lastKickoff > FORTY_EIGHT_HOURS_MS;
   });
 
+  const needsWelcome = !profile?.tutorial_dismissed_at;
+
   return (
-    <GroupTabs
+    <>
+      <div className="mx-auto max-w-5xl px-4 pt-4 md:px-8">
+        <WelcomeCard show={needsWelcome} />
+      </div>
+      <GroupTabs
       group={group}
       isHost={group.host_id === auth.user.id}
       currentUserId={auth.user.id}
@@ -186,5 +195,6 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       memberCount={memberIds.length}
       maxTier={group.max_tier}
     />
+    </>
   );
 }
