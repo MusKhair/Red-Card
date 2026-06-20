@@ -7,6 +7,8 @@ import { Leaderboard, type BoardRow } from "@/components/Leaderboard";
 import { ForfeitsPanel, type ForfeitRow, type CustomForfeitRow } from "@/components/ForfeitsPanel";
 import { BetsPanel, type TournamentPrediction, type TournamentResolutions } from "@/components/BetsPanel";
 import { InviteShare } from "@/components/InviteShare";
+import { StandingsTable, type StandingRow } from "@/components/StandingsTable";
+import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { STAGE_LABEL, VOTE_STAGES } from "@/lib/stages";
 
 type Group = {
@@ -39,6 +41,7 @@ export function GroupTabs({
   customForfeits,
   memberCount,
   maxTier,
+  standings,
 }: {
   group: Group;
   isHost: boolean;
@@ -58,9 +61,10 @@ export function GroupTabs({
   customForfeits: CustomForfeitRow[];
   memberCount: number;
   maxTier: number;
+  standings: StandingRow[];
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("fixtures");
-  const [fixturesSubTab, setFixturesSubTab] = useState<"upcoming" | "past">("upcoming");
+  const [fixturesSubTab, setFixturesSubTab] = useState<"upcoming" | "past" | "standings" | "bracket">("upcoming");
 
   const LIVE_STATUSES = new Set(["LIVE", "IN_PLAY", "PAUSED"]);
 
@@ -150,22 +154,27 @@ export function GroupTabs({
               </div>
             ) : (
               <>
-                <div className="mb-4 flex gap-1">
-                  {(["upcoming", "past"] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setFixturesSubTab(t)}
-                      className={`rounded-lg border px-3 py-1.5 font-display text-xs uppercase tracking-wide transition ${
-                        fixturesSubTab === t
-                          ? "border-booking bg-booking text-pitch-950"
-                          : "border-pitch-700 text-chalk-dim"
-                      }`}
-                    >
-                      {t === "upcoming"
-                        ? `Upcoming · ${upcomingMatches.length}`
-                        : `Past · ${finishedMatches.length}`}
-                    </button>
-                  ))}
+                <div className="mb-4 flex flex-wrap gap-1">
+                  {(["upcoming", "past", "standings", "bracket"] as const).map((t) => {
+                    let label: string;
+                    if (t === "upcoming") label = `Upcoming · ${upcomingMatches.length}`;
+                    else if (t === "past") label = `Past · ${finishedMatches.length}`;
+                    else if (t === "standings") label = "Standings";
+                    else label = "Bracket";
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => setFixturesSubTab(t)}
+                        className={`rounded-lg border px-2.5 py-1.5 font-display text-xs uppercase tracking-wide transition ${
+                          fixturesSubTab === t
+                            ? "border-booking bg-booking text-pitch-950"
+                            : "border-pitch-700 text-chalk-dim"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {fixturesSubTab === "upcoming" && (
@@ -213,6 +222,14 @@ export function GroupTabs({
                       </div>
                     )}
                   </>
+                )}
+
+                {fixturesSubTab === "standings" && (
+                  <StandingsTable standings={standings} />
+                )}
+
+                {fixturesSubTab === "bracket" && (
+                  <KnockoutBracket matches={matches} />
                 )}
               </>
             )}

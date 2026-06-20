@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GroupTabs } from "@/components/GroupTabs";
 import { WelcomeCard } from "@/components/WelcomeCard";
+import type { StandingRow } from "@/components/StandingsTable";
 import type { GroupPrediction } from "@/components/MatchCard";
 import type { CustomForfeitRow } from "@/components/ForfeitsPanel";
 import { VOTE_STAGES } from "@/lib/stages";
@@ -56,6 +57,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     { data: groupMembers },
     { data: customForfeitsRaw },
     { data: profile },
+    { data: standingsRaw },
   ] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff", { ascending: true }),
     supabase
@@ -89,6 +91,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       .in("status", ["pending_approval", "approved"])
       .order("created_at", { ascending: true }),
     supabase.from("profiles").select("tutorial_dismissed_at").eq("id", auth.user.id).single(),
+    supabase.from("group_standings").select("*"),
   ]);
 
   const memberRows = (groupMembers ?? []) as unknown as {
@@ -169,6 +172,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
   });
 
   const needsWelcome = !profile?.tutorial_dismissed_at;
+  const standings = (standingsRaw ?? []) as StandingRow[];
 
   return (
     <>
@@ -194,6 +198,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       customForfeits={customForfeits}
       memberCount={memberIds.length}
       maxTier={group.max_tier}
+      standings={standings}
     />
     </>
   );

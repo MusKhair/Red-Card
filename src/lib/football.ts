@@ -153,5 +153,9 @@ export async function syncMatchesAndScore(): Promise<{ synced: boolean; reason?:
   // not ready or already resolved.
   await admin.rpc("resolve_tournament_awards");
 
+  // Rebuild group→letter mapping from GROUP_STAGE match pairings.
+  // No-op when no GROUP_STAGE matches exist yet.
+  await admin.rpc("populate_team_groups");
+
   return { synced: true };
 }
