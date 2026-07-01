@@ -122,7 +122,7 @@ export function GroupTabs({
           {showTournamentBanner && (
             <Link href="/predictions" className="mt-4 block rounded-2xl border border-booking/30 bg-booking/10 p-4">
               <p className="font-display text-lg uppercase">🏆 Make your tournament picks</p>
-              <p className="mt-1 text-xs text-chalk-dim">Winner · Golden Boot · Golden Ball — locks June 24</p>
+              <p className="mt-1 text-xs text-chalk-dim">Winner · Golden Boot · Golden Ball — locks July 2</p>
             </Link>
           )}
         </div>

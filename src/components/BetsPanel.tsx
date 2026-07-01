@@ -147,7 +147,7 @@ export function BetsPanel({
               href="/predictions"
               className="rounded-full border border-booking/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-booking"
             >
-              Edit before June 24
+              Edit before July 2
             </Link>
           )}
         </div>

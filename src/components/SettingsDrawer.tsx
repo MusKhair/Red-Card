@@ -239,7 +239,7 @@ export function SettingsDrawer({
               </div>
 
               <div>
-                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Tournament bets (bonus picks, lock June 24)</h3>
+                <h3 className="font-display text-lg uppercase tracking-wide text-chalk">Tournament bets (bonus picks, lock July 2)</h3>
                 <ul className="mt-1 flex flex-col gap-1">
                   <li><strong className="text-chalk">Tournament Winner</strong>: pick the team you think wins it all. +15 pts if right.</li>
                   <li><strong className="text-chalk">Golden Boot</strong>: pick the top scorer of the tournament. +10 pts if right.</li>
